@@ -1,0 +1,310 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>ICS3U.S4 - Python List Activities</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f4f6f9; color: #333; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; }
+        
+        /* 顶部导航与题目区 */
+        .header-panel { background: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; border-left: 6px solid #007bff; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
+        .controls select, .controls button { padding: 8px 15px; font-size: 15px; border-radius: 5px; border: 1px solid #ccc; cursor: pointer; }
+        .controls button { background-color: #007bff; color: white; border: none; font-weight: bold; transition: 0.2s; }
+        .controls button:hover { background-color: #0056b3; }
+        .controls button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        #question-text { font-size: 15px; color: #444; line-height: 1.5; margin: 0; }
+        
+        /* 下方主干区 (左代码，右解释与输出) */
+        .main-content { display: flex; gap: 20px; flex-grow: 1; min-height: 0; }
+        
+        /* 左侧边栏：代码区 */
+        .left-panel { flex: 1; background: #282c34; color: #abb2bf; border-radius: 8px; padding: 20px; font-family: 'Courier New', Courier, monospace; font-size: 15px; overflow-y: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.15); line-height: 1.6; }
+        .line { padding: 2px 8px; border-radius: 4px; border-left: 4px solid transparent; white-space: pre-wrap; }
+        .active-line { background-color: #3e4451; color: #fff; font-weight: bold; border-left: 4px solid #61afef; }
+
+        /* 右侧边栏：分为上下两部分 */
+        .right-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; min-height: 0; }
+        
+        /* 右上：解释与变量区 */
+        .explanation-panel { flex: 1; background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-y: auto; border-top: 5px solid #28a745; }
+        .explanation-panel h3 { margin-top: 0; font-size: 16px; color: #28a745; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        #step-explanation { font-size: 15px; margin-bottom: 15px; min-height: 45px; color: #555; background: #f8f9fa; padding: 10px; border-radius: 5px; }
+        .var-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .var-box { background: #e9ecef; padding: 8px 12px; border-radius: 5px; font-family: monospace; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+        .var-name { font-weight: bold; color: #495057; }
+        .var-value { background: white; padding: 2px 6px; border-radius: 3px; border: 1px solid #ced4da; }
+
+        /* 右下：输出结果区 */
+        .output-panel { flex: 1; background: #1e1e1e; color: #00ff00; border-radius: 8px; padding: 20px; font-family: 'Courier New', Courier, monospace; box-shadow: 0 4px 10px rgba(0,0,0,0.15); overflow-y: auto; border-top: 5px solid #6c757d; }
+        .output-panel h3 { margin-top: 0; font-size: 16px; color: #fff; border-bottom: 1px solid #444; padding-bottom: 10px; }
+        #console-output { white-space: pre-wrap; line-height: 1.5; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div class="header-panel">
+        <div class="controls">
+            <label style="font-weight: bold;">Select Activity: </label>
+            <select id="activity-selector" onchange="loadActivity()">
+                <option value="1">Activity 1: 6 次循环求和与平均值</option>
+                <option value="2">Activity 2: 读到空白行停止并计算</option>
+                <option value="3">Activity 3: 正负数与零分类器</option>
+            </select>
+            <button id="start-btn" onclick="startExecution()">加载预设数据并开始运行</button>
+            <button id="step-btn" onclick="nextStep()" disabled>下一步 (Step)</button>
+        </div>
+        <p id="question-text"></p>
+    </div>
+
+    <div class="main-content">
+        <div class="left-panel" id="code-container"></div>
+
+        <div class="right-panel">
+            <div class="explanation-panel">
+                <h3>运行逻辑与内存监控</h3>
+                <div id="step-explanation">请点击上方“加载预设数据并开始运行”按钮。</div>
+                <div class="var-grid" id="var-container">
+                    </div>
+            </div>
+
+            <div class="output-panel">
+                <h3>终端输出 (Console)</h3>
+                <div id="console-output"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const activitiesData = {
+            1: {
+                question: "<strong>Activity 1:</strong> Write a program that reads numbers from the user 6 times. Your program should display the sum and average of all of the values entered by the user. (For loop)",
+                code: [
+                    "a = []",
+                    "for i in range(6):",
+                    "    x = int(input('Enter a number:'))",
+                    "    a.append(x)",
+                    "print('Sum=', sum(a))",
+                    "print('Average=', sum(a)/len(a))"
+                ],
+                testInput: [7, 3, 6, 3, 8, 25], // 课堂 Trace table 数据
+                generateStates: function(inputs) {
+                    let st = [];
+                    let a = [];
+                    st.push({ line: 0, vars: { a: "[]" }, expl: "初始化一个空列表 a，准备存放数据。" });
+                    for(let i = 0; i < 6; i++) {
+                        st.push({ line: 1, vars: { a: JSON.stringify(a), i: i }, expl: `进入 for 循环，当前第 ${i+1} 次循环，i = ${i}。` });
+                        let x = inputs[i];
+                        st.push({ line: 2, vars: { a: JSON.stringify(a), i: i, x: x }, expl: `模拟用户输入数字: ${x}，并将其转为整数。`, out: `Enter a number: ${x}\n` });
+                        a.push(x);
+                        st.push({ line: 3, vars: { a: JSON.stringify(a), i: i, x: x }, expl: `使用 append() 方法将 ${x} 追加到列表 a 的末尾。` });
+                    }
+                    let sum = a.reduce((acc, curr) => acc + curr, 0);
+                    st.push({ line: 4, vars: { a: JSON.stringify(a) }, expl: `循环结束。计算列表总和 sum(a) 并输出。`, out: `Sum= ${sum}\n` });
+                    let avg = sum / a.length;
+                    st.push({ line: 5, vars: { a: JSON.stringify(a) }, expl: `计算平均值 sum(a)/len(a) 并输出。`, out: `Average= ${avg.toFixed(2)}\n` });
+                    return st;
+                }
+            },
+            2: {
+                question: "<strong>Activity 2:</strong> Write a program that reads numbers from the user until a blank line is entered. Display the sum and average. Include edge-case handling if the first input is blank. (While loop)",
+                code: [
+                    "a = []",
+                    "while True:",
+                    "    x = input('Enter a number: ')",
+                    "    if x == '':",
+                    "        break",
+                    "    a.append(int(x))",
+                    "if len(a) == 0:",
+                    "    print('sum=0 & average=0')",
+                    "else:",
+                    "    print('Sum=', sum(a))",
+                    "    print('Average=', sum(a)/len(a))"
+                ],
+                testInput: [45, 12, 8, ""], // 包含终止符空字符串
+                generateStates: function(inputs) {
+                    let st = []; let a = [];
+                    st.push({ line: 0, vars: { a: "[]" }, expl: "初始化空列表 a。" });
+                    st.push({ line: 1, vars: { a: "[]" }, expl: "遇到 while True，开启无限循环。" });
+                    for(let i = 0; i < inputs.length; i++) {
+                        let raw_x = inputs[i];
+                        let isBlank = (raw_x === "");
+                        st.push({ line: 2, vars: { a: JSON.stringify(a), x: `"${raw_x}"` }, expl: `读取用户输入（作为字符串）。当前输入: "${raw_x}"`, out: `Enter a number: ${raw_x}\n` });
+                        st.push({ line: 3, vars: { a: JSON.stringify(a), x: `"${raw_x}"` }, expl: `检查输入是否为空白字符串 ""。` });
+                        if(isBlank) {
+                            st.push({ line: 4, vars: { a: JSON.stringify(a) }, expl: `输入为空！触发 break 关键字，立刻跳出循环。` });
+                            break;
+                        }
+                        a.push(raw_x);
+                        st.push({ line: 5, vars: { a: JSON.stringify(a), x: `"${raw_x}"` }, expl: `输入不为空，将字符串转换为整数，并 append 到列表中。` });
+                    }
+                    st.push({ line: 6, vars: { a: JSON.stringify(a) }, expl: `循环外：检查列表 a 是否为空 (防范除以0的错误)。` });
+                    if(a.length === 0) {
+                        st.push({ line: 7, vars: { a: JSON.stringify(a) }, expl: `列表为空，输出预设的 0 值。`, out: `sum=0 & average=0\n` });
+                    } else {
+                        st.push({ line: 8, vars: { a: JSON.stringify(a) }, expl: `列表不为空，进入 else 分支。` });
+                        let sum = a.reduce((acc, curr) => acc + curr, 0);
+                        st.push({ line: 9, vars: { a: JSON.stringify(a) }, expl: `计算并输出总和。`, out: `Sum= ${sum}\n` });
+                        st.push({ line: 10, vars: { a: JSON.stringify(a) }, expl: `计算并输出平均值。`, out: `Average= ${(sum/a.length).toFixed(2)}\n` });
+                    }
+                    return st;
+                }
+            },
+            3: {
+                question: "<strong>Activity 3:</strong> Read integers until a blank line is entered. Display all negative numbers, then zeros, then positive numbers in their original order. (Categorization)",
+                code: [
+                    "a = []; n = []; z = []; p = []",
+                    "while True:",
+                    "    x = input('Enter x: ')",
+                    "    if x == '':",
+                    "        break",
+                    "    x = int(x)",
+                    "    a.append(x)",
+                    "    if x < 0:",
+                    "        n.append(x)",
+                    "    elif x == 0:",
+                    "        z.append(x)",
+                    "    else:",
+                    "        p.append(x)",
+                    "print('Original:', a)",
+                    "print('negative:', n)",
+                    "print('zeros:', z)",
+                    "print('positive:', p)"
+                ],
+                testInput: [6, -6, 8, -4, 0, 14, ""], // 课堂实际测试数据
+                generateStates: function(inputs) {
+                    let st = []; let a = [], n = [], z = [], p = [];
+                    let getVars = () => ({ a: JSON.stringify(a), n: JSON.stringify(n), z: JSON.stringify(z), p: JSON.stringify(p) });
+                    st.push({ line: 0, vars: getVars(), expl: "初始化四个列表：a(原始), n(负数), z(零), p(正数)。" });
+                    st.push({ line: 1, vars: getVars(), expl: "开启 while True 无限循环。" });
+                    for(let i=0; i<inputs.length; i++) {
+                        let raw_x = inputs[i];
+                        st.push({ line: 2, vars: { ...getVars(), x: `"${raw_x}"` }, expl: `读取输入: "${raw_x}"`, out: `Enter x: ${raw_x}\n` });
+                        st.push({ line: 3, vars: { ...getVars(), x: `"${raw_x}"` }, expl: "检查是否为空白行。" });
+                        if(raw_x === "") {
+                            st.push({ line: 4, vars: getVars(), expl: "输入为空，break 跳出循环。" });
+                            break;
+                        }
+                        let x = parseInt(raw_x);
+                        st.push({ line: 5, vars: { ...getVars(), x: x }, expl: "将字符串转化为整数。" });
+                        a.push(x);
+                        st.push({ line: 6, vars: { ...getVars(), x: x }, expl: "记录到原始列表 a 中。" });
+                        st.push({ line: 7, vars: { ...getVars(), x: x }, expl: `检查 ${x} < 0 ?` });
+                        if(x < 0) {
+                            n.push(x);
+                            st.push({ line: 8, vars: { ...getVars(), x: x }, expl: `${x} 是负数，放入列表 n。` });
+                        } else {
+                            st.push({ line: 9, vars: { ...getVars(), x: x }, expl: `检查 ${x} == 0 ?` });
+                            if(x === 0) {
+                                z.push(x);
+                                st.push({ line: 10, vars: { ...getVars(), x: x }, expl: `${x} 是零，放入列表 z。` });
+                            } else {
+                                p.push(x);
+                                st.push({ line: 11, vars: { ...getVars(), x: x }, expl: `${x} 大于 0，进入 else 分支。` });
+                                st.push({ line: 12, vars: { ...getVars(), x: x }, expl: `${x} 是正数，放入列表 p。` });
+                            }
+                        }
+                    }
+                    st.push({ line: 13, vars: getVars(), expl: "打印原始列表。", out: `Original: ${JSON.stringify(a)}\n` });
+                    st.push({ line: 14, vars: getVars(), expl: "打印负数列表。", out: `negative: ${JSON.stringify(n)}\n` });
+                    st.push({ line: 15, vars: getVars(), expl: "打印零列表。", out: `zeros: ${JSON.stringify(z)}\n` });
+                    st.push({ line: 16, vars: getVars(), expl: "打印正数列表。", out: `positive: ${JSON.stringify(p)}\n` });
+                    return st;
+                }
+            }
+        };
+
+        let currentActivity = 1;
+        let states = [];
+        let stateIndex = 0;
+
+        function loadActivity() {
+            currentActivity = document.getElementById("activity-selector").value;
+            const data = activitiesData[currentActivity];
+            
+            // 加载题目
+            document.getElementById("question-text").innerHTML = data.question;
+            
+            // 加载代码
+            const codeContainer = document.getElementById("code-container");
+            codeContainer.innerHTML = "";
+            data.code.forEach((line, idx) => {
+                const div = document.createElement("div");
+                div.id = `line-${idx}`;
+                div.className = "line";
+                div.textContent = line;
+                codeContainer.appendChild(div);
+            });
+
+            // 重置状态
+            document.getElementById("start-btn").disabled = false;
+            document.getElementById("step-btn").disabled = true;
+            document.getElementById("console-output").textContent = "";
+            document.getElementById("step-explanation").innerHTML = `请点击上方“加载预设数据并开始运行”按钮。`;
+            document.getElementById("var-container").innerHTML = "";
+            states = [];
+        }
+
+        function startExecution() {
+            const data = activitiesData[currentActivity];
+            states = data.generateStates(data.testInput);
+            stateIndex = 0;
+            
+            document.getElementById("start-btn").disabled = true;
+            document.getElementById("step-btn").disabled = false;
+            document.getElementById("console-output").textContent = "";
+            
+            nextStep(); // 自动执行第一步
+        }
+
+        function nextStep() {
+            if (stateIndex >= states.length) {
+                document.getElementById("step-explanation").innerHTML = "<strong>✅ 程序执行完毕！</strong>";
+                document.getElementById("step-btn").disabled = true;
+                document.getElementById("start-btn").disabled = false;
+                document.getElementById("start-btn").textContent = "重新运行";
+                return;
+            }
+
+            const state = states[stateIndex];
+
+            // 1. 高亮代码行
+            document.querySelectorAll('.line').forEach(el => el.classList.remove('active-line'));
+            const activeLine = document.getElementById(`line-${state.line}`);
+            if(activeLine) {
+                activeLine.classList.add('active-line');
+                activeLine.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+
+            // 2. 更新解释
+            document.getElementById("step-explanation").innerHTML = `<strong>步骤 ${stateIndex + 1}/${states.length}:</strong><br>${state.expl}`;
+
+            // 3. 更新变量面板
+            const varContainer = document.getElementById("var-container");
+            varContainer.innerHTML = "";
+            if (state.vars) {
+                for (const [key, value] of Object.entries(state.vars)) {
+                    varContainer.innerHTML += `
+                        <div class="var-box">
+                            <span class="var-name">${key}</span>
+                            <span class="var-value">${value}</span>
+                        </div>
+                    `;
+                }
+            }
+
+            // 4. 更新终端输出
+            if (state.out) {
+                const consoleEl = document.getElementById("console-output");
+                consoleEl.textContent += state.out;
+                consoleEl.scrollTop = consoleEl.scrollHeight;
+            }
+
+            stateIndex++;
+        }
+
+        // 初始化加载第一项
+        window.onload = loadActivity;
+    </script>
+</body>
+</html>
