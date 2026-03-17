@@ -6,26 +6,24 @@
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f4f6f9; color: #333; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; }
         
-        /* 顶部导航与题目区 */
         .header-panel { background: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; border-left: 6px solid #6f42c1; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
         .controls select, .controls button { padding: 8px 15px; font-size: 15px; border-radius: 5px; border: 1px solid #ccc; cursor: pointer; }
         .controls button { background-color: #6f42c1; color: white; border: none; font-weight: bold; transition: 0.2s; }
         .controls button:hover { background-color: #59339d; }
         .controls button:disabled { background-color: #6c757d; cursor: not-allowed; }
-        #question-text { font-size: 15px; color: #444; line-height: 1.5; margin: 0; }
         
-        /* 下方主干区 (左代码，右解释与输出) */
+        /* 增加对较长题目的样式支持 */
+        .question-box { background: #eef2f5; padding: 12px; border-radius: 5px; border: 1px dashed #adb5bd; }
+        #question-text { font-size: 14px; color: #333; line-height: 1.6; margin: 0; font-family: 'Segoe UI', sans-serif;}
+        
         .main-content { display: flex; gap: 20px; flex-grow: 1; min-height: 0; }
         
-        /* 左侧边栏：代码区 */
         .left-panel { flex: 1; background: #282c34; color: #abb2bf; border-radius: 8px; padding: 20px; font-family: 'Courier New', Courier, monospace; font-size: 15px; overflow-y: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.15); line-height: 1.6; }
         .line { padding: 2px 8px; border-radius: 4px; border-left: 4px solid transparent; white-space: pre-wrap; }
         .active-line { background-color: #3e4451; color: #fff; font-weight: bold; border-left: 4px solid #e06c75; }
 
-        /* 右侧边栏：分为上下两部分 */
         .right-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; min-height: 0; }
         
-        /* 右上：解释与变量区 */
         .explanation-panel { flex: 1; background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-y: auto; border-top: 5px solid #17a2b8; }
         .explanation-panel h3 { margin-top: 0; font-size: 16px; color: #17a2b8; border-bottom: 1px solid #eee; padding-bottom: 10px; }
         #step-explanation { font-size: 15px; margin-bottom: 15px; min-height: 45px; color: #555; background: #f8f9fa; padding: 10px; border-radius: 5px; }
@@ -34,7 +32,6 @@
         .var-name { font-weight: bold; color: #495057; }
         .var-value { background: white; padding: 2px 6px; border-radius: 3px; border: 1px solid #ced4da; }
 
-        /* 右下：输出结果区 */
         .output-panel { flex: 1; background: #1e1e1e; color: #00ff00; border-radius: 8px; padding: 20px; font-family: 'Courier New', Courier, monospace; box-shadow: 0 4px 10px rgba(0,0,0,0.15); overflow-y: auto; border-top: 5px solid #6c757d; }
         .output-panel h3 { margin-top: 0; font-size: 16px; color: #fff; border-bottom: 1px solid #444; padding-bottom: 10px; }
         #console-output { white-space: pre-wrap; line-height: 1.5; font-size: 14px; }
@@ -55,19 +52,19 @@
             <button id="start-btn" onclick="startExecution()">加载预设数据并开始运行</button>
             <button id="step-btn" onclick="nextStep()" disabled>下一步 (Step)</button>
         </div>
-        <p id="question-text"></p>
+        <div class="question-box">
+            <p id="question-text"></p>
+        </div>
     </div>
 
     <div class="main-content">
         <div class="left-panel" id="code-container"></div>
-
         <div class="right-panel">
             <div class="explanation-panel">
                 <h3>代码运行逻辑与变量监控</h3>
                 <div id="step-explanation">请点击上方“加载预设数据并开始运行”按钮。</div>
                 <div class="var-grid" id="var-container"></div>
             </div>
-
             <div class="output-panel">
                 <h3>终端输出 (Console)</h3>
                 <div id="console-output"></div>
@@ -78,7 +75,7 @@
     <script>
         const activitiesData = {
             "1a": {
-                question: "<strong>Activity 1 (Solution 1):</strong> 导入 statistics 库，读取 6 次数字，利用内置函数 sum() 和 mean() 计算并输出结果。",
+                question: "<strong>Activity 1:</strong> Write a program that reads numbers from the user 6 times. Your program should display the sum and average of all of the values entered by the user. (Gets 6 numbers from keyboard (User), show sum and average, Draw a Trace table)",
                 code: [
                     "from statistics import mean",
                     "a=[]",
@@ -112,7 +109,7 @@
                 }
             },
             "1b": {
-                question: "<strong>Activity 1 (Solution 2):</strong> 声明 sum1=0 变量，在 6 次循环内部手动累加数字，最后使用 sum1/6 计算平均值。",
+                question: "<strong>Activity 1:</strong> Write a program that reads numbers from the user 6 times. Your program should display the sum and average of all of the values entered by the user. (Gets 6 numbers from keyboard (User), show sum and average, Draw a Trace table)",
                 code: [
                     "sum1=0",
                     "a=[]",
@@ -147,7 +144,7 @@
                 }
             },
             "2a": {
-                question: "<strong>Activity 2 (基础版):</strong> While 循环不断读取字符串，遇空格（\" \"）时退出循环。由于没有空列表判断，若直接输入空格会报错（逻辑演示）。",
+                question: "<strong>Activity 2:</strong> Write a program that reads numbers from the user until a blank line is entered. Your program should display the average of all of the values entered by the user",
                 code: [
                     "Class Activity 2",
                     "a=[]",
@@ -185,7 +182,7 @@
                 }
             },
             "2b": {
-                question: "<strong>Activity 2 (防错版):</strong> 添加了 if len(a)==0 防御性判断。我们将在此次演示中故意直接输入空格，测试程序的错误拦截能力！",
+                question: "<strong>Activity 2:</strong> Write a program that reads numbers from the user until a blank line is entered. Your program should display the average of all of the values entered by the user (With Empty List Handling)",
                 code: [
                     "a=[]",
                     "while True:",
@@ -222,7 +219,7 @@
                 }
             },
             "3": {
-                question: "<strong>Class Activity 3:</strong> 初始化原始(a)、负数(n)、零(z)、正数(p)共4个列表。遇空格停止，通过 if/elif/else 路由将数字分类存放。",
+                question: "<strong>Activity 3:</strong> Create a program that reads integers from the user until a blank line is entered. Once all of the integers have been read your program should display all of the negative numbers, followed by all of the zeros, followed by all of the positive numbers. Within each group the numbers should be displayed in the same order that they were entered by the user. For example, if the user enters the values 3, -4, 1, 0, -1, 0 and -2 then your program should output The values -4, -1, -2, 0, 0, 3, and 1. Your program should display each value on its own line.",
                 code: [
                     "a=[]",
                     "n=[]",
@@ -298,10 +295,8 @@
             currentActivity = document.getElementById("activity-selector").value;
             const data = activitiesData[currentActivity];
             
-            // 加载题目
             document.getElementById("question-text").innerHTML = data.question;
             
-            // 加载代码 (保留原代码缩进结构)
             const codeContainer = document.getElementById("code-container");
             codeContainer.innerHTML = "";
             data.code.forEach((line, idx) => {
@@ -312,7 +307,6 @@
                 codeContainer.appendChild(div);
             });
 
-            // 重置状态
             document.getElementById("start-btn").disabled = false;
             document.getElementById("step-btn").disabled = true;
             document.getElementById("console-output").textContent = "";
@@ -330,7 +324,7 @@
             document.getElementById("step-btn").disabled = false;
             document.getElementById("console-output").textContent = "";
             
-            nextStep(); // 自动执行第一步
+            nextStep(); 
         }
 
         function nextStep() {
@@ -344,7 +338,6 @@
 
             const state = states[stateIndex];
 
-            // 1. 高亮代码行
             document.querySelectorAll('.line').forEach(el => el.classList.remove('active-line'));
             const activeLine = document.getElementById(`line-${state.line}`);
             if(activeLine) {
@@ -352,10 +345,8 @@
                 activeLine.scrollIntoView({ behavior: "smooth", block: "center" });
             }
 
-            // 2. 更新解释
             document.getElementById("step-explanation").innerHTML = `<strong>步骤 ${stateIndex + 1}/${states.length}:</strong><br>${state.expl}`;
 
-            // 3. 更新变量面板
             const varContainer = document.getElementById("var-container");
             varContainer.innerHTML = "";
             if (state.vars) {
@@ -369,7 +360,6 @@
                 }
             }
 
-            // 4. 更新终端输出
             if (state.out) {
                 const consoleEl = document.getElementById("console-output");
                 consoleEl.textContent += state.out;
@@ -379,7 +369,6 @@
             stateIndex++;
         }
 
-        // 初始化加载第一项
         window.onload = loadActivity;
     </script>
 </body>
