@@ -1,17 +1,16 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>ICS3U.S4 - Python List Activities</title>
+    <title>ICS3U - Python 原版代码逻辑可视化</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f4f6f9; color: #333; height: 100vh; box-sizing: border-box; display: flex; flex-direction: column; }
         
         /* 顶部导航与题目区 */
-        .header-panel { background: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; border-left: 6px solid #007bff; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
+        .header-panel { background: white; padding: 15px 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; border-left: 6px solid #6f42c1; display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; }
         .controls select, .controls button { padding: 8px 15px; font-size: 15px; border-radius: 5px; border: 1px solid #ccc; cursor: pointer; }
-        .controls button { background-color: #007bff; color: white; border: none; font-weight: bold; transition: 0.2s; }
-        .controls button:hover { background-color: #0056b3; }
+        .controls button { background-color: #6f42c1; color: white; border: none; font-weight: bold; transition: 0.2s; }
+        .controls button:hover { background-color: #59339d; }
         .controls button:disabled { background-color: #6c757d; cursor: not-allowed; }
         #question-text { font-size: 15px; color: #444; line-height: 1.5; margin: 0; }
         
@@ -21,14 +20,14 @@
         /* 左侧边栏：代码区 */
         .left-panel { flex: 1; background: #282c34; color: #abb2bf; border-radius: 8px; padding: 20px; font-family: 'Courier New', Courier, monospace; font-size: 15px; overflow-y: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.15); line-height: 1.6; }
         .line { padding: 2px 8px; border-radius: 4px; border-left: 4px solid transparent; white-space: pre-wrap; }
-        .active-line { background-color: #3e4451; color: #fff; font-weight: bold; border-left: 4px solid #61afef; }
+        .active-line { background-color: #3e4451; color: #fff; font-weight: bold; border-left: 4px solid #e06c75; }
 
         /* 右侧边栏：分为上下两部分 */
         .right-panel { flex: 1; display: flex; flex-direction: column; gap: 20px; min-height: 0; }
         
         /* 右上：解释与变量区 */
-        .explanation-panel { flex: 1; background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-y: auto; border-top: 5px solid #28a745; }
-        .explanation-panel h3 { margin-top: 0; font-size: 16px; color: #28a745; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .explanation-panel { flex: 1; background: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-y: auto; border-top: 5px solid #17a2b8; }
+        .explanation-panel h3 { margin-top: 0; font-size: 16px; color: #17a2b8; border-bottom: 1px solid #eee; padding-bottom: 10px; }
         #step-explanation { font-size: 15px; margin-bottom: 15px; min-height: 45px; color: #555; background: #f8f9fa; padding: 10px; border-radius: 5px; }
         .var-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
         .var-box { background: #e9ecef; padding: 8px 12px; border-radius: 5px; font-family: monospace; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
@@ -45,11 +44,13 @@
 
     <div class="header-panel">
         <div class="controls">
-            <label style="font-weight: bold;">Select Activity: </label>
+            <label style="font-weight: bold;">Select Original Code Version: </label>
             <select id="activity-selector" onchange="loadActivity()">
-                <option value="1">Activity 1: 6 次循环求和与平均值</option>
-                <option value="2">Activity 2: 读到空白行停止并计算</option>
-                <option value="3">Activity 3: 正负数与零分类器</option>
+                <option value="1a">Activity 1 (Solution 1) - 使用 mean 函数</option>
+                <option value="1b">Activity 1 (Solution 2) - 使用 sum1 变量手动累加</option>
+                <option value="2a">Activity 2 (基础版) - 遇空格结束</option>
+                <option value="2b">Activity 2 (防错版) - len(a)==0 边界处理</option>
+                <option value="3">Activity 3 - 正负数与零分类器</option>
             </select>
             <button id="start-btn" onclick="startExecution()">加载预设数据并开始运行</button>
             <button id="step-btn" onclick="nextStep()" disabled>下一步 (Step)</button>
@@ -62,10 +63,9 @@
 
         <div class="right-panel">
             <div class="explanation-panel">
-                <h3>运行逻辑与内存监控</h3>
+                <h3>代码运行逻辑与变量监控</h3>
                 <div id="step-explanation">请点击上方“加载预设数据并开始运行”按钮。</div>
-                <div class="var-grid" id="var-container">
-                    </div>
+                <div class="var-grid" id="var-container"></div>
             </div>
 
             <div class="output-panel">
@@ -77,144 +77,220 @@
 
     <script>
         const activitiesData = {
-            1: {
-                question: "<strong>Activity 1:</strong> Write a program that reads numbers from the user 6 times. Your program should display the sum and average of all of the values entered by the user. (For loop)",
+            "1a": {
+                question: "<strong>Activity 1 (Solution 1):</strong> 导入 statistics 库，读取 6 次数字，利用内置函数 sum() 和 mean() 计算并输出结果。",
                 code: [
-                    "a = []",
+                    "from statistics import mean",
+                    "a=[]",
                     "for i in range(6):",
-                    "    x = int(input('Enter a number:'))",
-                    "    a.append(x)",
-                    "print('Sum=', sum(a))",
-                    "print('Average=', sum(a)/len(a))"
+                    " x=int(input('Enter a number:'))",
+                    " a.append(x)",
+                    "#------------------------------------",
+                    "print(a)",
+                    "#---- solution 2-----",
+                    "print('Sum is=',sum(a))",
+                    "print('Average= %.2f' %mean(a))"
                 ],
-                testInput: [7, 3, 6, 3, 8, 25], // 课堂 Trace table 数据
+                testInput: [7, 3, 6, 3, 8, 25],
                 generateStates: function(inputs) {
-                    let st = [];
-                    let a = [];
-                    st.push({ line: 0, vars: { a: "[]" }, expl: "初始化一个空列表 a，准备存放数据。" });
+                    let st = []; let a = [];
+                    st.push({ line: 0, vars: {}, expl: "导入 mean 函数用于后续计算平均值。" });
+                    st.push({ line: 1, vars: { a: "[]" }, expl: "初始化空列表 a。" });
                     for(let i = 0; i < 6; i++) {
-                        st.push({ line: 1, vars: { a: JSON.stringify(a), i: i }, expl: `进入 for 循环，当前第 ${i+1} 次循环，i = ${i}。` });
+                        st.push({ line: 2, vars: { a: JSON.stringify(a), i: i }, expl: `for 循环第 ${i+1} 次 (共 6 次)。` });
                         let x = inputs[i];
-                        st.push({ line: 2, vars: { a: JSON.stringify(a), i: i, x: x }, expl: `模拟用户输入数字: ${x}，并将其转为整数。`, out: `Enter a number: ${x}\n` });
+                        st.push({ line: 3, vars: { a: JSON.stringify(a), i: i, x: x }, expl: `用户输入了 ${x}，并转为整型。`, out: `Enter a number:${x}\n` });
                         a.push(x);
-                        st.push({ line: 3, vars: { a: JSON.stringify(a), i: i, x: x }, expl: `使用 append() 方法将 ${x} 追加到列表 a 的末尾。` });
+                        st.push({ line: 4, vars: { a: JSON.stringify(a), i: i, x: x }, expl: `将 ${x} append 追加到列表 a 中。` });
                     }
+                    st.push({ line: 6, vars: { a: JSON.stringify(a) }, expl: "打印整个列表 a。", out: `${JSON.stringify(a)}\n` });
                     let sum = a.reduce((acc, curr) => acc + curr, 0);
-                    st.push({ line: 4, vars: { a: JSON.stringify(a) }, expl: `循环结束。计算列表总和 sum(a) 并输出。`, out: `Sum= ${sum}\n` });
-                    let avg = sum / a.length;
-                    st.push({ line: 5, vars: { a: JSON.stringify(a) }, expl: `计算平均值 sum(a)/len(a) 并输出。`, out: `Average= ${avg.toFixed(2)}\n` });
+                    let meanVal = sum / a.length;
+                    st.push({ line: 8, vars: { a: JSON.stringify(a) }, expl: "打印 sum(a) 的总和结果。", out: `Sum is= ${sum}\n` });
+                    st.push({ line: 9, vars: { a: JSON.stringify(a) }, expl: "打印 mean(a)，并用 %.2f 格式化为两位小数。", out: `Average= ${meanVal.toFixed(2)}\n` });
                     return st;
                 }
             },
-            2: {
-                question: "<strong>Activity 2:</strong> Write a program that reads numbers from the user until a blank line is entered. Display the sum and average. Include edge-case handling if the first input is blank. (While loop)",
+            "1b": {
+                question: "<strong>Activity 1 (Solution 2):</strong> 声明 sum1=0 变量，在 6 次循环内部手动累加数字，最后使用 sum1/6 计算平均值。",
                 code: [
-                    "a = []",
-                    "while True:",
-                    "    x = input('Enter a number: ')",
-                    "    if x == '':",
-                    "        break",
-                    "    a.append(int(x))",
-                    "if len(a) == 0:",
-                    "    print('sum=0 & average=0')",
-                    "else:",
-                    "    print('Sum=', sum(a))",
-                    "    print('Average=', sum(a)/len(a))"
+                    "sum1=0",
+                    "a=[]",
+                    "for i in range(6):",
+                    " x=int(input('Enter a number:'))",
+                    " a.append(x)",
+                    " sum1=sum1+x",
+                    "",
+                    "#------------------------------------",
+                    "print(a)",
+                    "print('Sum=',sum1)",
+                    "print('Average=',sum1/6)"
                 ],
-                testInput: [45, 12, 8, ""], // 包含终止符空字符串
+                testInput: [5, 3, 12, 17, 19, 56],
+                generateStates: function(inputs) {
+                    let st = []; let a = []; let sum1 = 0;
+                    st.push({ line: 0, vars: { sum1: sum1 }, expl: "初始化累加变量 sum1 为 0。" });
+                    st.push({ line: 1, vars: { sum1: sum1, a: "[]" }, expl: "初始化空列表 a。" });
+                    for(let i = 0; i < 6; i++) {
+                        st.push({ line: 2, vars: { sum1: sum1, a: JSON.stringify(a), i: i }, expl: `进入循环，当前 i = ${i}。` });
+                        let x = inputs[i];
+                        st.push({ line: 3, vars: { sum1: sum1, a: JSON.stringify(a), i: i, x: x }, expl: `获取输入数字 ${x}。`, out: `Enter a number:${x}\n` });
+                        a.push(x);
+                        st.push({ line: 4, vars: { sum1: sum1, a: JSON.stringify(a), i: i, x: x }, expl: "追加至列表 a。" });
+                        sum1 = sum1 + x;
+                        st.push({ line: 5, vars: { sum1: sum1, a: JSON.stringify(a), i: i, x: x }, expl: `执行累加：当前 sum1 更新为 ${sum1}。` });
+                    }
+                    st.push({ line: 8, vars: { sum1: sum1, a: JSON.stringify(a) }, expl: "打印列表 a。", out: `${JSON.stringify(a)}\n` });
+                    st.push({ line: 9, vars: { sum1: sum1, a: JSON.stringify(a) }, expl: "打印 sum1 变量的值。", out: `Sum= ${sum1}\n` });
+                    st.push({ line: 10, vars: { sum1: sum1, a: JSON.stringify(a) }, expl: "计算并打印 sum1/6。", out: `Average= ${sum1/6}\n` });
+                    return st;
+                }
+            },
+            "2a": {
+                question: "<strong>Activity 2 (基础版):</strong> While 循环不断读取字符串，遇空格（\" \"）时退出循环。由于没有空列表判断，若直接输入空格会报错（逻辑演示）。",
+                code: [
+                    "Class Activity 2",
+                    "a=[]",
+                    "while True:",
+                    " x=input('Enter a number: ') #it is String",
+                    " if x==' ':",
+                    " break",
+                    " a.append(int(x))",
+                    "#-------------------------",
+                    "print (a)",
+                    "print('Sum= ',sum(a))",
+                    "print('Average = ',sum(a)/len(a))"
+                ],
+                testInput: [7, 45, " "],
+                generateStates: function(inputs) {
+                    let st = []; let a = [];
+                    st.push({ line: 1, vars: { a: "[]" }, expl: "初始化空列表 a。" });
+                    st.push({ line: 2, vars: { a: "[]" }, expl: "开启 while True 死循环。" });
+                    for(let i = 0; i < inputs.length; i++) {
+                        let raw = inputs[i];
+                        st.push({ line: 3, vars: { a: JSON.stringify(a), x: `"${raw}"` }, expl: `获取字符串输入。当前 x = "${raw}"。`, out: `Enter a number: ${raw}\n` });
+                        st.push({ line: 4, vars: { a: JSON.stringify(a), x: `"${raw}"` }, expl: "检查 x 是否等于单个空格 ' '。" });
+                        if(raw === " ") {
+                            st.push({ line: 5, vars: { a: JSON.stringify(a) }, expl: "条件成立，执行 break 跳出 while 循环。" });
+                            break;
+                        }
+                        a.push(parseInt(raw));
+                        st.push({ line: 6, vars: { a: JSON.stringify(a), x: `"${raw}"` }, expl: "由于不是空格，将字符串转整型后存入列表。" });
+                    }
+                    st.push({ line: 8, vars: { a: JSON.stringify(a) }, expl: "打印列表内容。", out: `${JSON.stringify(a)}\n` });
+                    let sum = a.reduce((acc, curr) => acc + curr, 0);
+                    st.push({ line: 9, vars: { a: JSON.stringify(a) }, expl: "打印 sum(a)。", out: `Sum=  ${sum}\n` });
+                    st.push({ line: 10, vars: { a: JSON.stringify(a) }, expl: "打印平均值。", out: `Average =  ${sum/a.length}\n` });
+                    return st;
+                }
+            },
+            "2b": {
+                question: "<strong>Activity 2 (防错版):</strong> 添加了 if len(a)==0 防御性判断。我们将在此次演示中故意直接输入空格，测试程序的错误拦截能力！",
+                code: [
+                    "a=[]",
+                    "while True:",
+                    " x=input('Enter a number: ') #it is String",
+                    " if x==' ':",
+                    " break",
+                    " a.append(int(x))",
+                    "#-------------------------",
+                    "print (a)",
+                    "if len(a)==0:",
+                    " print(f'sum=0 & average=0')",
+                    "else:",
+                    " print('Sum= ',sum(a))",
+                    " print('Average = ',sum(a)/len(a))"
+                ],
+                testInput: [" "], // 直接测试空列表
                 generateStates: function(inputs) {
                     let st = []; let a = [];
                     st.push({ line: 0, vars: { a: "[]" }, expl: "初始化空列表 a。" });
-                    st.push({ line: 1, vars: { a: "[]" }, expl: "遇到 while True，开启无限循环。" });
+                    st.push({ line: 1, vars: { a: "[]" }, expl: "开启无限循环。" });
                     for(let i = 0; i < inputs.length; i++) {
-                        let raw_x = inputs[i];
-                        let isBlank = (raw_x === "");
-                        st.push({ line: 2, vars: { a: JSON.stringify(a), x: `"${raw_x}"` }, expl: `读取用户输入（作为字符串）。当前输入: "${raw_x}"`, out: `Enter a number: ${raw_x}\n` });
-                        st.push({ line: 3, vars: { a: JSON.stringify(a), x: `"${raw_x}"` }, expl: `检查输入是否为空白字符串 ""。` });
-                        if(isBlank) {
-                            st.push({ line: 4, vars: { a: JSON.stringify(a) }, expl: `输入为空！触发 break 关键字，立刻跳出循环。` });
+                        let raw = inputs[i];
+                        st.push({ line: 2, vars: { a: JSON.stringify(a), x: `"${raw}"` }, expl: `用户没有输入数字，直接输入了一个空格。`, out: `Enter a number: ${raw}\n` });
+                        st.push({ line: 3, vars: { a: JSON.stringify(a), x: `"${raw}"` }, expl: "检查 if x == ' ' 成立。" });
+                        if(raw === " ") {
+                            st.push({ line: 4, vars: { a: JSON.stringify(a) }, expl: "触发 break 跳出循环！" });
                             break;
                         }
-                        a.push(raw_x);
-                        st.push({ line: 5, vars: { a: JSON.stringify(a), x: `"${raw_x}"` }, expl: `输入不为空，将字符串转换为整数，并 append 到列表中。` });
                     }
-                    st.push({ line: 6, vars: { a: JSON.stringify(a) }, expl: `循环外：检查列表 a 是否为空 (防范除以0的错误)。` });
-                    if(a.length === 0) {
-                        st.push({ line: 7, vars: { a: JSON.stringify(a) }, expl: `列表为空，输出预设的 0 值。`, out: `sum=0 & average=0\n` });
-                    } else {
-                        st.push({ line: 8, vars: { a: JSON.stringify(a) }, expl: `列表不为空，进入 else 分支。` });
-                        let sum = a.reduce((acc, curr) => acc + curr, 0);
-                        st.push({ line: 9, vars: { a: JSON.stringify(a) }, expl: `计算并输出总和。`, out: `Sum= ${sum}\n` });
-                        st.push({ line: 10, vars: { a: JSON.stringify(a) }, expl: `计算并输出平均值。`, out: `Average= ${(sum/a.length).toFixed(2)}\n` });
-                    }
+                    st.push({ line: 7, vars: { a: JSON.stringify(a) }, expl: "打印当前为空的列表 a。", out: `[]\n` });
+                    st.push({ line: 8, vars: { a: JSON.stringify(a) }, expl: "关键防线：检查列表长度是否为 0。" });
+                    st.push({ line: 9, vars: { a: JSON.stringify(a) }, expl: "len(a) 确实为 0，程序输出预设字符串，成功避免除以 0 的奔溃！", out: `sum=0 & average=0\n` });
                     return st;
                 }
             },
-            3: {
-                question: "<strong>Activity 3:</strong> Read integers until a blank line is entered. Display all negative numbers, then zeros, then positive numbers in their original order. (Categorization)",
+            "3": {
+                question: "<strong>Class Activity 3:</strong> 初始化原始(a)、负数(n)、零(z)、正数(p)共4个列表。遇空格停止，通过 if/elif/else 路由将数字分类存放。",
                 code: [
-                    "a = []; n = []; z = []; p = []",
+                    "a=[]",
+                    "n=[]",
+                    "z=[]",
+                    "p=[]",
                     "while True:",
-                    "    x = input('Enter x: ')",
-                    "    if x == '':",
-                    "        break",
-                    "    x = int(x)",
-                    "    a.append(x)",
-                    "    if x < 0:",
-                    "        n.append(x)",
-                    "    elif x == 0:",
-                    "        z.append(x)",
-                    "    else:",
-                    "        p.append(x)",
-                    "print('Original:', a)",
-                    "print('negative:', n)",
-                    "print('zeros:', z)",
-                    "print('positive:', p)"
+                    " x=input('Enter x:')",
+                    " if x==' ':",
+                    " break",
+                    " x=int(x)",
+                    " a.append(x)",
+                    " if x<0:",
+                    " n.append(x)",
+                    " elif x==0:",
+                    " z.append(x)",
+                    " else:",
+                    " p.append(x)",
+                    "",
+                    "#---------------",
+                    "print('Orginal: ',a)",
+                    "print('negative: ',n)",
+                    "print('zeros: ',z)",
+                    "print('positive: ',p)"
                 ],
-                testInput: [6, -6, 8, -4, 0, 14, ""], // 课堂实际测试数据
+                testInput: [6, -6, 0, " "],
                 generateStates: function(inputs) {
                     let st = []; let a = [], n = [], z = [], p = [];
                     let getVars = () => ({ a: JSON.stringify(a), n: JSON.stringify(n), z: JSON.stringify(z), p: JSON.stringify(p) });
-                    st.push({ line: 0, vars: getVars(), expl: "初始化四个列表：a(原始), n(负数), z(零), p(正数)。" });
-                    st.push({ line: 1, vars: getVars(), expl: "开启 while True 无限循环。" });
+                    st.push({ line: 0, vars: getVars(), expl: "连续初始化 a, n, z, p 四个空列表。" });
+                    st.push({ line: 4, vars: getVars(), expl: "进入 while 循环。" });
                     for(let i=0; i<inputs.length; i++) {
-                        let raw_x = inputs[i];
-                        st.push({ line: 2, vars: { ...getVars(), x: `"${raw_x}"` }, expl: `读取输入: "${raw_x}"`, out: `Enter x: ${raw_x}\n` });
-                        st.push({ line: 3, vars: { ...getVars(), x: `"${raw_x}"` }, expl: "检查是否为空白行。" });
-                        if(raw_x === "") {
-                            st.push({ line: 4, vars: getVars(), expl: "输入为空，break 跳出循环。" });
+                        let raw = inputs[i];
+                        st.push({ line: 5, vars: { ...getVars(), x: `"${raw}"` }, expl: `接受输入 x = "${raw}"。`, out: `Enter x:${raw}\n` });
+                        st.push({ line: 6, vars: { ...getVars(), x: `"${raw}"` }, expl: "检查是否为空格。" });
+                        if(raw === " ") {
+                            st.push({ line: 7, vars: getVars(), expl: "触发 break 结束。" });
                             break;
                         }
-                        let x = parseInt(raw_x);
-                        st.push({ line: 5, vars: { ...getVars(), x: x }, expl: "将字符串转化为整数。" });
+                        let x = parseInt(raw);
+                        st.push({ line: 8, vars: { ...getVars(), x: x }, expl: "字符串转整型：x = int(x)。" });
                         a.push(x);
-                        st.push({ line: 6, vars: { ...getVars(), x: x }, expl: "记录到原始列表 a 中。" });
-                        st.push({ line: 7, vars: { ...getVars(), x: x }, expl: `检查 ${x} < 0 ?` });
+                        st.push({ line: 9, vars: { ...getVars(), x: x }, expl: "无条件追加到原始列表 a 中。" });
+                        st.push({ line: 10, vars: { ...getVars(), x: x }, expl: `分类：x<0 吗？` });
                         if(x < 0) {
                             n.push(x);
-                            st.push({ line: 8, vars: { ...getVars(), x: x }, expl: `${x} 是负数，放入列表 n。` });
+                            st.push({ line: 11, vars: { ...getVars(), x: x }, expl: `是，追加到负数列表 n。` });
                         } else {
-                            st.push({ line: 9, vars: { ...getVars(), x: x }, expl: `检查 ${x} == 0 ?` });
+                            st.push({ line: 12, vars: { ...getVars(), x: x }, expl: `判断 x==0 吗？` });
                             if(x === 0) {
                                 z.push(x);
-                                st.push({ line: 10, vars: { ...getVars(), x: x }, expl: `${x} 是零，放入列表 z。` });
+                                st.push({ line: 13, vars: { ...getVars(), x: x }, expl: `是，追加到零列表 z。` });
                             } else {
+                                st.push({ line: 14, vars: { ...getVars(), x: x }, expl: `否则执行 else 分支。` });
                                 p.push(x);
-                                st.push({ line: 11, vars: { ...getVars(), x: x }, expl: `${x} 大于 0，进入 else 分支。` });
-                                st.push({ line: 12, vars: { ...getVars(), x: x }, expl: `${x} 是正数，放入列表 p。` });
+                                st.push({ line: 15, vars: { ...getVars(), x: x }, expl: `追加到正数列表 p。` });
                             }
                         }
                     }
-                    st.push({ line: 13, vars: getVars(), expl: "打印原始列表。", out: `Original: ${JSON.stringify(a)}\n` });
-                    st.push({ line: 14, vars: getVars(), expl: "打印负数列表。", out: `negative: ${JSON.stringify(n)}\n` });
-                    st.push({ line: 15, vars: getVars(), expl: "打印零列表。", out: `zeros: ${JSON.stringify(z)}\n` });
-                    st.push({ line: 16, vars: getVars(), expl: "打印正数列表。", out: `positive: ${JSON.stringify(p)}\n` });
+                    st.push({ line: 18, vars: getVars(), expl: "按序打印四个列表：", out: `Orginal:  ${JSON.stringify(a)}\n` });
+                    st.push({ line: 19, vars: getVars(), expl: "打印负数列表。", out: `negative:  ${JSON.stringify(n)}\n` });
+                    st.push({ line: 20, vars: getVars(), expl: "打印零列表。", out: `zeros:  ${JSON.stringify(z)}\n` });
+                    st.push({ line: 21, vars: getVars(), expl: "打印正数列表。", out: `positive:  ${JSON.stringify(p)}\n` });
                     return st;
                 }
             }
         };
 
-        let currentActivity = 1;
+        let currentActivity = "1a";
         let states = [];
         let stateIndex = 0;
 
@@ -225,7 +301,7 @@
             // 加载题目
             document.getElementById("question-text").innerHTML = data.question;
             
-            // 加载代码
+            // 加载代码 (保留原代码缩进结构)
             const codeContainer = document.getElementById("code-container");
             codeContainer.innerHTML = "";
             data.code.forEach((line, idx) => {
