@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>Python 列表 (Lists) 核心概念</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; color: #333; line-height: 1.6; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        
+        /* 页面标题 */
+        .page-header { background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%); color: white; padding: 30px; border-radius: 10px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 30px; }
+        .page-header h1 { margin: 0; font-size: 28px; }
+        .page-header p { margin: 10px 0 0 0; opacity: 0.9; font-size: 16px; }
+
+        /* 内容卡片 */
+        .card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 25px; border-left: 5px solid #2575fc; }
+        .card h2 { margin-top: 0; color: #2575fc; font-size: 22px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        
+        /* 代码块与高亮 */
+        code { background: #e9ecef; padding: 2px 6px; border-radius: 4px; font-family: 'Courier New', Courier, monospace; color: #d63384; font-weight: bold; }
+        .code-block { background: #282c34; color: #abb2bf; padding: 15px; border-radius: 6px; font-family: 'Courier New', Courier, monospace; overflow-x: auto; }
+        .keyword { color: #c678dd; } /* 紫色关键字 */
+        .string { color: #98c379; } /* 绿色字符串 */
+        .func { color: #61afef; } /* 蓝色函数 */
+
+        /* 互动演示区：内存数组可视化 */
+        .demo-area { background: #eef2f5; padding: 20px; border-radius: 8px; text-align: center; border: 1px dashed #adb5bd; }
+        .memory-tape { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin: 20px 0; min-height: 80px; align-items: center; }
+        .memory-cell { background: white; border: 2px solid #2575fc; border-radius: 6px; width: 80px; text-align: center; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.1); animation: popIn 0.3s ease-out; }
+        .memory-cell .index { background: #2575fc; color: white; font-size: 12px; font-weight: bold; padding: 2px 0; border-radius: 4px 4px 0 0; }
+        .memory-cell .value { padding: 10px 5px; font-size: 14px; font-family: monospace; word-break: break-all; }
+        
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* 交互控制 */
+        .controls input { padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; width: 150px; }
+        .controls select { padding: 8px; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; }
+        .controls button { padding: 9px 15px; font-size: 14px; cursor: pointer; background: #28a745; color: white; border: none; border-radius: 4px; font-weight: bold; transition: 0.2s; }
+        .controls button:hover { background: #218838; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header class="page-header">
+            <h1>📦 Python 列表 (List) 入门指南</h1>
+            <p>探索 Python 中最强大、最灵活的数据容器！</p>
+        </header>
+
+        <div class="card">
+            <h2>1. 什么是列表？(与传统数组的区别)</h2>
+            <p>在计算机科学中，如果你需要存储一系列数据的集合，我们通常称之为<strong>数组 (Array)</strong> [cite: 476]。但在 Python 中，它被称为<strong>列表 (List)</strong>。</p>
+            <ul>
+                <li><strong>传统语言的限制：</strong> 在 C++ 或 Java 等其他语言中，数组通常要求存放<strong>相同的数据类型</strong> [cite: 477]。要么全是整数，要么全是字符串。</li>
+                <li><strong>Python 的魔法：</strong> Python 列表极其灵活！你可以将不同的数据类型（如字符串、整数、小数浮点数等）混合存放在同一个列表中 [cite: 480, 481, 526, 527]。</li>
+            </ul>
+            <div class="code-block">
+                <span class="comment"># 这是一个混合数据类型的列表 (Atousa老师的 Zoo 案例)</span><br>
+                mix = [<span class="string">"monkey"</span>, <span class="keyword">7</span>, <span class="keyword">12</span>, <span class="string">"gorilla"</span>]
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>2. 内存索引：如何访问列表中的元素？</h2>
+            <p>为了访问列表中的特定元素，我们需要使用<strong>索引 (Index)</strong>。请记住计算机科学中最重要的法则之一：<strong>计数是从 0 开始的！</strong></p>
+            <p>如果你想访问整个集合 <code>a</code> 中的各个元素，你需要使用 <code>0, 1, 2, 3...</code> 这样的数字 [cite: 489, 490]。</p>
+            <ul>
+                <li>第一个元素是 <code>a[0]</code> [cite: 488]</li>
+                <li>第二个元素是 <code>a[1]</code> [cite: 488]</li>
+                <li>第三个元素是 <code>a[2]</code> [cite: 488, 489]</li>
+            </ul>
+        </div>
+
+        <div class="card">
+            <h2>3. 动态扩张：append() 方法</h2>
+            <p>列表是<strong>可变的 (Mutable)</strong> [cite: 482]。这意味着你可以在程序运行时随时修改它。</p>
+            <p>如果你想将一个新元素添加到列表的<strong>末尾</strong>，在 Python 中你只需要使用 <code>.append()</code> 方法 [cite: 556, 559]。这比其他很多编程语言都要简单得多！</p>
+            
+            <div class="demo-area">
+                <h3 style="margin-top:0; color:#444;">👇 互动演示：向列表追加元素并观察索引</h3>
+                <div class="controls">
+                    <select id="dataType">
+                        <option value="string">文本 (String)</option>
+                        <option value="number">数字 (Integer)</option>
+                    </select>
+                    <input type="text" id="inputValue" placeholder="输入要添加的值...">
+                    <button onclick="appendToList()">执行 .append()</button>
+                    <button onclick="clearList()" style="background: #dc3545;">清空列表</button>
+                </div>
+                
+                <div class="memory-tape" id="memoryTape">
+                    <span style="color: #888; font-style: italic;" id="emptyMsg">列表当前为空 []</span>
+                </div>
+                
+                <p style="font-family: monospace; color: #2575fc; font-weight: bold;">
+                    当前代码状态: <span id="codeStatus">mix = []</span>
+                </p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>4. 遍历列表：超简单的 For 循环</h2>
+            <p>在其他语言中，遍历一个数组可能需要写很长的代码，但在 Python 中，你只需要一句话！</p>
+            <p>你可以把 <code>k</code> 想象成一个搬运工（容器），它会依次走到列表的每一个元素下面，把当前看到的值装进自己肚子里 [cite: 575, 577, 578]。</p>
+            <div class="code-block">
+                <span class="keyword">for</span> k <span class="keyword">in</span> a:<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;<span class="func">print</span>(k) <span class="comment"># 依次打印出 "good news", "you will have", "till Friday" [cite: 575, 578, 581, 583]</span>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let pythonList = [];
+
+        function appendToList() {
+            const inputEl = document.getElementById('inputValue');
+            let val = inputEl.value;
+            const type = document.getElementById('dataType').value;
+
+            if (val.trim() === '') {
+                alert("请输入内容后再追加！");
+                return;
+            }
+
+            // 处理数据类型
+            let displayVal = val;
+            let codeVal = val;
+            if (type === 'string') {
+                codeVal = `"${val}"`;
+                displayVal = `"${val}"`;
+            } else if (type === 'number') {
+                if(isNaN(val)) {
+                    alert("您选择了数字类型，请输入有效数字！");
+                    return;
+                }
+                codeVal = Number(val);
+                displayVal = Number(val);
+            }
+
+            pythonList.push(displayVal);
+            inputEl.value = ''; // 清空输入框
+            renderList();
+        }
+
+        function clearList() {
+            pythonList = [];
+            renderList();
+        }
+
+        function renderList() {
+            const tape = document.getElementById('memoryTape');
+            const codeStatus = document.getElementById('codeStatus');
+            const emptyMsg = document.getElementById('emptyMsg');
+
+            tape.innerHTML = ''; // 清空当前显示
+            
+            if (pythonList.length === 0) {
+                tape.innerHTML = '<span style="color: #888; font-style: italic;" id="emptyMsg">列表当前为空 []</span>';
+                codeStatus.textContent = "mix = []";
+                return;
+            }
+
+            // 渲染列表内存块
+            pythonList.forEach((item, index) => {
+                const cell = document.createElement('div');
+                cell.className = 'memory-cell';
+                
+                // 根据类型给不同颜色 (简单区分字符串和数字)
+                let valueColor = typeof item === 'string' && item.startsWith('"') ? '#28a745' : '#d63384';
+                
+                cell.innerHTML = `
+                    <div class="index">mix[${index}]</div>
+                    <div class="value" style="color: ${valueColor};">${item}</div>
+                `;
+                tape.appendChild(cell);
+            });
+
+            // 更新下方代码状态
+            codeStatus.textContent = `mix = [${pythonList.join(', ')}]`;
+        }
+    </script>
+</body>
+</html>
