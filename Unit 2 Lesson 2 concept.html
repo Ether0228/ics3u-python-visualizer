@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Lists: Core Technical Concepts | Python 列表：核心技术概念</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; line-height: 1.6; padding: 20px; }
+        .container { max-width: 900px; margin: auto; }
+        h1 { text-align: center; color: #2c3e50; }
+        .card { background: #fff; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h2 { color: #2980b9; border-bottom: 2px solid #eee; padding-bottom: 5px; }
+        pre { background: #2d2d2d; color: #f8f8f2; padding: 15px; border-radius: 5px; overflow-x: auto; font-family: 'Courier New', Courier, monospace; }
+        .keyword { color: #f92672; }
+        .string { color: #e6db74; }
+        .comment { color: #75715e; }
+        ul { margin-top: 0; }
+        li { margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Python Lists: Core Technical Concepts <br><span style="font-size: 0.6em; color: #7f8c8d;">Python 列表：核心技术概念</span></h1>
+        
+        <div class="card">
+            <h2>1. Deleting Elements (删除元素)</h2>
+            <p>We can remove items from a list using several methods (我们可以使用多种方法从列表中移除元素):</p>
+            <ul>
+                <li><strong>del</strong>: Deletes an item at a specific index (删除指定索引处的元素).</li>
+                <li><strong>.pop()</strong>: Removes and returns the last item, or an item at a specified index (移除并返回最后一个元素，或指定索引处的元素).</li>
+                <li><strong>.remove()</strong>: Removes the first occurrence of a specific value (移除列表中第一次出现的特定值).</li>
+            </ul>
+            <pre><code>a = [<span class="string">"Mia"</span>, <span class="string">"Rafer"</span>, <span class="string">"Brad"</span>, <span class="string">"Alex"</span>]
+<span class="keyword">del</span> a[-1]           <span class="comment"># Deletes the last item / 删除最后一项 ("Alex")</span>
+a.pop(1)            <span class="comment"># Removes item at index 1 / 移除索引 1 处的项 ("Rafer")</span>
+a.remove(<span class="string">"Mia"</span>)     <span class="comment"># Removes the specific value / 移除特定值 ("Mia")</span></code></pre>
+        </div>
+
+        <div class="card">
+            <h2>2. Updating & Inserting (更新与插入)</h2>
+            <p>You can modify existing data or append new data to the list (您可以修改现有数据或向列表追加新数据):</p>
+            <ul>
+                <li><strong>Index Assignment (索引赋值)</strong>: Modifies the value at a specific position (修改特定位置的值).</li>
+                <li><strong>.insert()</strong>: Inserts an item at a given position (在指定位置插入元素).</li>
+                <li><strong>.append()</strong>: Appends an item to the end of the list (在列表末尾追加元素).</li>
+            </ul>
+            <pre><code>a = [<span class="string">"Mia"</span>, <span class="string">"Rafer"</span>]
+a[1] = <span class="string">"Sam"</span>             <span class="comment"># Modifies "Rafer" to "Sam" / 将 "Rafer" 修改为 "Sam"</span>
+a.insert(1, <span class="string">"Spencer"</span>)   <span class="comment"># Inserts "Spencer" at index 1 / 在索引 1 处插入 "Spencer"</span>
+a.append(<span class="string">"Yanbo"</span>)        <span class="comment"># Appends "Yanbo" to the end / 在末尾追加 "Yanbo"</span></code></pre>
+        </div>
+
+        <div class="card">
+            <h2>3. Sorting & Reversing (排序与反转)</h2>
+            <p>Lists can be organized alphabetically, numerically, or in reverse order (列表可以按字母顺序、数字顺序或逆序排列):</p>
+            <ul>
+                <li><strong>.sort()</strong>: Sorts the elements of the list in place (对列表元素进行原地排序).</li>
+                <li><strong>.reverse()</strong>: Reverses the elements of the list in place (原地反转列表元素).</li>
+            </ul>
+            <pre><code>a = [<span class="string">"Mia"</span>, <span class="string">"Alex"</span>, <span class="string">"Zack"</span>]
+a.sort()       <span class="comment"># Becomes / 变为 ["Alex", "Mia", "Zack"]</span>
+a.reverse()    <span class="comment"># Becomes / 变为 ["Zack", "Mia", "Alex"]</span></code></pre>
+        </div>
+
+        <div class="card">
+            <h2>4. Searching & Indexing (搜索与索引)</h2>
+            <p>We utilize loops and the `.index()` method to pinpoint the exact location of an element (我们利用循环和 `.index()` 方法来精确定位元素的具体位置):</p>
+            <pre><code>a = [<span class="string">"Mia"</span>, <span class="string">"Brad"</span>, <span class="string">"Alex"</span>]
+name = <span class="string">"Brad"</span>
+
+<span class="keyword">if</span> name <span class="keyword">in</span> a:
+    j = a.index(name)
+    print(<span class="string">"Found at index / 查找到的索引位置:"</span>, j)  <span class="comment"># Output: 1</span>
+<span class="keyword">else</span>:
+    print(<span class="string">"Not found! / 未找到！"</span>)</code></pre>
+        </div>
+        
+        <div class="card">
+            <h2>5. Advanced: Math and Randomness (进阶：数学与随机性)</h2>
+            <p>We can import Python modules to generate random integers and compute statistical metrics (我们可以导入 Python 模块来生成随机整数并计算统计指标):</p>
+            <pre><code><span class="keyword">import</span> random
+<span class="keyword">import</span> statistics
+
+scores = [90, 89, 70, 45, 67]
+random_score = random.randint(50, 100)  <span class="comment"># Generates a random integer / 生成一个随机整数</span>
+
+print(<span class="string">"Max / 最大值:"</span>, max(scores))
+print(<span class="string">"Min / 最小值:"</span>, min(scores))
+print(<span class="string">"Median / 中位数:"</span>, statistics.median(scores))</code></pre>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Python Lab | 交互式 Python 实验室</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #eef2f3; margin: 0; padding: 20px; color: #333; }
+        .header { display: flex; justify-content: space-between; align-items: center; background: #fff; padding: 15px 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        select { padding: 10px; font-size: 16px; border-radius: 5px; border: 1px solid #ccc; cursor: pointer; }
+        
+        .question-box { background: #3498db; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; font-size: 1.1em; box-shadow: 0 2px 5px rgba(0,0,0,0.1); line-height: 1.5; }
+        
+        .main-content { display: flex; gap: 20px; height: 550px; }
+        
+        /* Left Column: Code */
+        .code-panel { flex: 1; background: #1e1e1e; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .panel-header { background: #333; color: #fff; padding: 10px 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center;}
+        
+        .btn-group { display: flex; gap: 10px; }
+        .run-btn { background: #2ecc71; color: white; border: none; padding: 6px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s;}
+        .run-btn:hover { background: #27ae60; }
+        .run-btn:disabled { background: #7f8c8d; cursor: not-allowed; }
+        
+        .reset-btn { background: #e74c3c; color: white; border: none; padding: 6px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.3s;}
+        .reset-btn:hover { background: #c0392b; }
+
+        pre { margin: 0; padding: 15px; color: #d4d4d4; font-family: 'Courier New', Courier, monospace; overflow-y: auto; flex: 1; font-size: 15px; line-height: 1.5; }
+        
+        /* Code Line Highlight Styles */
+        .code-line { display: block; padding: 2px 5px; border-left: 3px solid transparent; border-radius: 0 3px 3px 0; transition: background-color 0.2s; }
+        .active-line { background-color: rgba(46, 204, 113, 0.3); border-left: 3px solid #2ecc71; color: #fff; font-weight: bold; }
+
+        /* Right Column: Explanation & Output */
+        .right-panel { flex: 1; display: flex; flex-direction: column; gap: 15px; }
+        .explanation-box { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow-y: auto; border-left: 5px solid #f1c40f; line-height: 1.6; height: 35%;}
+        
+        /* Interactive State & Output Area */
+        .terminal-box { flex: 1; display: flex; flex-direction: column; gap: 10px; background: #2c3e50; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); overflow: hidden;}
+        
+        .variables-area { background: #1a252f; color: #ecf0f1; padding: 10px; border-radius: 5px; font-family: 'Courier New', Courier, monospace; min-height: 90px; border: 1px solid #34495e; overflow-y: auto;}
+        .variables-title { color: #bdc3c7; font-size: 0.85em; margin-bottom: 5px; border-bottom: 1px dashed #7f8c8d; padding-bottom: 3px; }
+        
+        .output-area { flex: 1; background: #000; color: #0f0; padding: 10px; border-radius: 5px; font-family: 'Courier New', Courier, monospace; overflow-y: auto; border: 1px solid #34495e; white-space: pre-wrap;}
+        .output-title { color: #bdc3c7; font-size: 0.85em; margin-bottom: 5px; border-bottom: 1px dashed #7f8c8d; padding-bottom: 3px; }
+
+        /* Custom Highlight Colors for Variables */
+        .val-list { color: #f1c40f; font-weight: bold; }
+        .val-note-red { color: #e74c3c; font-size: 0.9em; margin-top: 4px; display: block;}
+        .val-note-green { color: #2ecc71; font-size: 0.9em; margin-top: 4px; display: block;}
+        .val-note-blue { color: #3498db; font-size: 0.9em; margin-top: 4px; display: block;}
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1 style="margin: 0; font-size: 1.5em;">🐍 Python Lab Interactive Viewer (交互式查看器)</h1>
+        <select id="activity-select" onchange="loadActivity()">
+            <option value="0">Activity 1: Delete, Update, Sort (删除、更新与排序)</option>
+            <option value="1">Activity 2: Find & Index (查找与索引)</option>
+            <option value="2">Lab Practice: Filter Repetition (过滤重复项)</option>
+            <option value="3">Quiz 1: Objects List (对象列表测验)</option>
+        </select>
+    </div>
+
+    <div class="question-box" id="question-text"></div>
+
+    <div class="main-content">
+        <div class="code-panel">
+            <div class="panel-header">
+                <span>Python Code (代码)</span>
+                <div class="btn-group">
+                    <button class="run-btn" id="next-btn" onclick="nextStep()">▶ Start (开始)</button>
+                    <button class="reset-btn" onclick="loadActivity()">↺ Reset (重置)</button>
+                </div>
+            </div>
+            <pre id="code-text"></pre>
+        </div>
+
+        <div class="right-panel">
+            <div class="explanation-box">
+                <h3 style="margin-top:0; margin-bottom: 10px; color:#2c3e50; font-size: 1.1em;">💡 Teacher's Explanation (教师解析)</h3>
+                <div id="explanation-text" style="font-size: 0.95em;"></div>
+            </div>
+            
+            <div class="terminal-box">
+                <div class="variables-area">
+                    <div class="variables-title">🔍 Current Variables State (当前变量与列表状态)</div>
+                    <div id="variables-content" style="line-height: 1.4;">Click "Start" to see variables (点击“开始”查看变量)</div>
+                </div>
+                
+                <div class="output-area">
+                    <div class="output-title">>_ Terminal Output (终端输出)</div>
+                    <div id="output-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 0;
+
+        // Data Structure mapping exactly to the class activities
+        const activities = [
+            {
+                question: "<strong>Task:</strong><br>1. Delete the last item. (删除最后一项)<br>2. Delete the fourth item. (删除第四项)<br>3. Update the fifth value: Spencer -> Sam. (更新第五个值)<br>4. Sort & Reverse. (排序和反转)",
+                explanation: "Using <code>del a[-1]</code> is an efficient way to remove the trailing element (利用 <code>del a[-1]</code> 可以快速删除尾部元素). <br>Indices are zero-based, thus the fourth element corresponds to index 3 (索引从0开始算起，所以第四项是索引 3). <br>Notice how the list automatically resizes and shifts left when elements are deleted! (请注意右侧的变量框：当元素被删除时，列表是如何自动缩短并向左对齐的！)",
+                lines: [
+                    'a = ["Mia", "Rafer", "Brad", "Alex", "Spencer", "Yanbo"]', // 0
+                    'print("Original:", a)', // 1
+                    'del a[-1]', // 2
+                    'del a[3]', // 3
+                    'a[3] = "Sam"', // 4
+                    'a.sort()', // 5
+                    'a.reverse()', // 6
+                    'print("Final:", a)' // 7
+                ],
+                steps: [
+                    { line: 0, vars: 'a = <span class="val-list">["Mia", "Rafer", "Brad", "Alex", "Spencer", "Yanbo"]</span><span class="val-note-blue"># Initialized (初始化) | Length: 6</span>' },
+                    { line: 1, vars: 'a = <span class="val-list">["Mia", "Rafer", "Brad", "Alex", "Spencer", "Yanbo"]</span>', out: "Original: ['Mia', 'Rafer', 'Brad', 'Alex', 'Spencer', 'Yanbo']\n" },
+                    { line: 2, vars: 'a = <span class="val-list">["Mia", "Rafer", "Brad", "Alex", "Spencer"]</span><span class="val-note-red"># ❌ "Yanbo" deleted (删除尾项) | Length: 5</span>' },
+                    { line: 3, vars: 'a = <span class="val-list">["Mia", "Rafer", "Brad", "Spencer"]</span><span class="val-note-red"># ❌ "Alex" deleted (删除索引3) | Length: 4</span>' },
+                    { line: 4, vars: 'a = <span class="val-list">["Mia", "Rafer", "Brad", "Sam"]</span><span class="val-note-green"># 🔄 "Spencer" updated to "Sam" (更新值)</span>' },
+                    { line: 5, vars: 'a = <span class="val-list">["Brad", "Mia", "Rafer", "Sam"]</span><span class="val-note-blue"># 🔤 Alphabetical Order (按字母A-Z排序)</span>' },
+                    { line: 6, vars: 'a = <span class="val-list">["Sam", "Rafer", "Mia", "Brad"]</span><span class="val-note-blue"># 🔁 Reversed Order (反转顺序)</span>' },
+                    { line: 7, vars: 'a = <span class="val-list">["Sam", "Rafer", "Mia", "Brad"]</span>', out: "Final: ['Sam', 'Rafer', 'Mia', 'Brad']\n" }
+                ]
+            },
+            {
+                question: "<strong>Task:</strong><br>Find a student in the list. Ask the user 'which name you are looking for?' (询问用户要查找的姓名). If not found, print 'Not Found!'. Otherwise, loop to find the index.",
+                explanation: "Using the <code>in</code> keyword (e.g., <code>if ss not in a:</code>) validates element existence (使用 <code>in</code> 关键字可以验证元素是否存在)[cite: 323]. <br>Watch the right panel as the <code>for</code> loop checks each item `k` one by one! (点击下一步，在右侧观察 <code>for</code> 循环是如何逐个检查变量 `k` 的！)",
+                lines: [
+                    'a = ["Mia", "Rafer", "Brad", "Alex"]', // 0
+                    'ss = "Alex" # Simulated input (模拟输入)', // 1
+                    'if ss not in a:', // 2
+                    '    print("Not Found!")', // 3
+                    'else:', // 4
+                    '    for k in a:', // 5
+                    '        if k == ss:', // 6
+                    '            j = a.index(ss)', // 7
+                    '            print(f"I found {ss} and index is j={j}")' // 8
+                ],
+                steps: [
+                    { line: 0, vars: 'a = <span class="val-list">["Mia", "Rafer", "Brad", "Alex"]</span>' },
+                    { line: 1, vars: 'a = <span class="val-list">["Mia", "Rafer", "Brad", "Alex"]</span><br>ss = <span class="val-list">"Alex"</span> <span class="val-note-blue"># Target to find (目标值)</span>' },
+                    { line: 2, vars: 'a = <span class="val-list">["Mia", "Rafer", "Brad", "Alex"]</span><br>ss = "Alex"' },
+                    { line: 4, vars: 'a = <span class="val-list">["Mia", "Rafer", "Brad", "Alex"]</span><br>ss = "Alex"' },
+                    { line: 5, vars: 'a = <span class="val-list">["Mia", "Rafer", "Brad", "Alex"]</span><br>ss = "Alex"<br>k = <span class="val-list">"Mia"</span> <span class="val-note-blue"># Loop starts (循环开始)</span>' },
+                    { line: 6, vars: 'a = <span class="val-list">["Mia", "Rafer", "Brad", "Alex"]</span><br>ss = "Alex"<br>k = "Mia" <span class="val-note-red"># Match False (不匹配)</span>' },
+                    { line: 5, vars: 'a = <span class="val-list">["Mia", "Rafer", "Brad", "Alex"]</span><br>ss = "Alex"<br>k = <span class="val-list">"Rafer"</span>' },
+                    { line: 6, vars: 'a = <span class="val-list">["Mia", "Rafer", "Brad", "Alex"]</span><br>ss = "Alex"<br>k = "Rafer" <span class="val-note-red"># Match False (不匹配)</span>' },
+                    { line: 5, vars: 'a = <span class="val-list">["Mia", "Rafer", "Brad", "Alex"]</span><br>ss = "Alex"<br>k = <span class="val-list">"Brad"</span>' },
+                    { line: 6, vars: 'a = <span class="val-list">["Mia", "Rafer", "Brad", "Alex"]</span><br>ss = "Alex"<br>k = "Brad" <span class="val-note-red"># Match False (不匹配)</span>' },
+                    { line: 5, vars: 'a = <span class="val-list">["Mia", "Rafer", "Brad", "Alex"]</span><br>ss = "Alex"<br>k = <span class="val-list">"Alex"</span>' },
+                    { line: 6, vars: 'a = <span class="val-list">["Mia", "Rafer", "Brad", "Alex"]</span><br>ss = "Alex"<br>k = "Alex" <span class="val-note-green"># Match True! (匹配成功！)</span>' },
+                    { line: 7, vars: 'a = <span class="val-list">["Mia", "Rafer", "Brad", "Alex"]</span><br>ss = "Alex", k = "Alex"<br>j = <span class="val-list">3</span> <span class="val-note-green"># Index stored (获取索引)</span>' },
+                    { line: 8, vars: 'a = <span class="val-list">["Mia", "Rafer", "Brad", "Alex"]</span><br>ss = "Alex", k = "Alex"<br>j = 3', out: 'I found Alex and index is j=3\n' },
+                ]
+            },
+            {
+                question: "<strong>Task:</strong><br>Write a project that creates a new list without any repetitive elements (编写程序创建一个不包含重复元素的新列表).",
+                explanation: "We initialize an empty list <code>new_n = []</code>. If an element is absent from the new list, we append it (初始化一个空列表。若元素尚未存在于新列表中，则将其附加) . <br>Watch the right panel: You will clearly see elements being <b>Added</b> to `new_n`, and watch how the duplicate 'Mia' is completely skipped! (在右侧面板观察：您会清楚地看到元素被加入到新列表，并且重复的 'Mia' 会被直接跳过！) ",
+                lines: [
+                    'n = ["Mia", "Alex", "Mia", "Bob"]', // 0
+                    'new_n = []', // 1
+                    'for k in n:', // 2
+                    '    if k not in new_n:', // 3
+                    '        new_n.append(k)', // 4
+                    'print("New List =", new_n)' // 5
+                ],
+                steps: [
+                    { line: 0, vars: 'n = <span class="val-list">["Mia", "Alex", "Mia", "Bob"]</span>' },
+                    { line: 1, vars: 'n = ["Mia", "Alex", "Mia", "Bob"]<br>new_n = <span class="val-list">[]</span> <span class="val-note-blue"># Empty List Created (创建空列表)</span>' },
+                    // First iteration (Mia)
+                    { line: 2, vars: 'n = ["Mia", "Alex", "Mia", "Bob"]<br>new_n = []<br>k = <span class="val-list">"Mia"</span>' },
+                    { line: 3, vars: 'n = ["Mia", "Alex", "Mia", "Bob"]<br>new_n = []<br>k = "Mia" <span class="val-note-green"># Not in new list (不在新列表中)</span>' },
+                    { line: 4, vars: 'n = ["Mia", "Alex", "Mia", "Bob"]<br>new_n = <span class="val-list">["Mia"]</span> <span class="val-note-green"># ➕ "Mia" Appended (附加 Mia)</span><br>k = "Mia"' },
+                    // Second iteration (Alex)
+                    { line: 2, vars: 'n = ["Mia", "Alex", "Mia", "Bob"]<br>new_n = ["Mia"]<br>k = <span class="val-list">"Alex"</span>' },
+                    { line: 3, vars: 'n = ["Mia", "Alex", "Mia", "Bob"]<br>new_n = ["Mia"]<br>k = "Alex" <span class="val-note-green"># Not in new list (不在新列表中)</span>' },
+                    { line: 4, vars: 'n = ["Mia", "Alex", "Mia", "Bob"]<br>new_n = <span class="val-list">["Mia", "Alex"]</span> <span class="val-note-green"># ➕ "Alex" Appended (附加 Alex)</span><br>k = "Alex"' },
+                    // Third iteration (Mia - Duplicate!)
+                    { line: 2, vars: 'n = ["Mia", "Alex", "Mia", "Bob"]<br>new_n = ["Mia", "Alex"]<br>k = <span class="val-list">"Mia"</span>' },
+                    { line: 3, vars: 'n = ["Mia", "Alex", "Mia", "Bob"]<br>new_n = ["Mia", "Alex"]<br>k = "Mia" <span class="val-note-red"># ❌ Duplicate! Skip Line 4 (重复项！跳过添加)</span>' },
+                    // Fourth iteration (Bob)
+                    { line: 2, vars: 'n = ["Mia", "Alex", "Mia", "Bob"]<br>new_n = ["Mia", "Alex"]<br>k = <span class="val-list">"Bob"</span>' },
+                    { line: 3, vars: 'n = ["Mia", "Alex", "Mia", "Bob"]<br>new_n = ["Mia", "Alex"]<br>k = "Bob" <span class="val-note-green"># Not in new list (不在新列表中)</span>' },
+                    { line: 4, vars: 'n = ["Mia", "Alex", "Mia", "Bob"]<br>new_n = <span class="val-list">["Mia", "Alex", "Bob"]</span> <span class="val-note-green"># ➕ "Bob" Appended (附加 Bob)</span><br>k = "Bob"' },
+                    // End
+                    { line: 5, vars: 'n = ["Mia", "Alex", "Mia", "Bob"]<br>new_n = <span class="val-list">["Mia", "Alex", "Bob"]</span>', out: "New List = ['Mia', 'Alex', 'Bob']\n" }
+                ]
+            },
+            {
+                question: "<strong>Task: (Quiz 1)</strong><br>Get objects. Delete the last object (删除最后一个对象). Insert 'TV' after 'Book' (在'Book'后插入'TV'). Delete the third object (删除第三个对象). Change the name of the 'Eraser' (更改'Eraser').",
+                explanation: "<code>.pop()</code> is used to remove the trailing item (<code>.pop()</code> 用于移除末尾项) .<br><code>.insert(3, 'TV')</code> inserts 'TV' at the specified index without overwriting existing data (将 'TV' 插入到指定索引，而不覆盖现有数据). <br>Click Next Step and watch the object list transform! (点击下一步，观察列表的变化！)",
+                lines: [
+                    'obj = ["Bag", "Table", "Book", "Pen", "Eraser", "Laptop"]', // 0
+                    'obj.pop()', // 1
+                    'obj.insert(3, "TV")', // 2
+                    'del obj[2]', // 3
+                    'obj[4] = "Whiteboard"', // 4
+                    'print("End:", obj)' // 5
+                ],
+                steps: [
+                    { line: 0, vars: 'obj = <span class="val-list">["Bag", "Table", "Book", "Pen", "Eraser", "Laptop"]</span><span class="val-note-blue"># List of 6 items (初始 6 个对象)</span>' },
+                    { line: 1, vars: 'obj = <span class="val-list">["Bag", "Table", "Book", "Pen", "Eraser"]</span><span class="val-note-red"># ❌ "Laptop" removed via .pop() (移除尾项)</span>' },
+                    { line: 2, vars: 'obj = <span class="val-list">["Bag", "Table", "Book", "TV", "Pen", "Eraser"]</span><span class="val-note-green"># ➕ "TV" inserted at index 3 (索引3处插入TV)</span>' },
+                    { line: 3, vars: 'obj = <span class="val-list">["Bag", "Table", "TV", "Pen", "Eraser"]</span><span class="val-note-red"># ❌ "Book" (index 2) removed (移除索引2处项)</span>' },
+                    { line: 4, vars: 'obj = <span class="val-list">["Bag", "Table", "TV", "Pen", "Whiteboard"]</span><span class="val-note-green"># 🔄 "Eraser" changed to "Whiteboard" (修改项)</span>' },
+                    { line: 5, vars: 'obj = <span class="val-list">["Bag", "Table", "TV", "Pen", "Whiteboard"]</span>', out: "End: ['Bag', 'Table', 'TV', 'Pen', 'Whiteboard']\n" }
+                ]
+            }
+        ];
+
+        function loadActivity() {
+            // Reset state
+            currentStep = 0;
+            const btn = document.getElementById("next-btn");
+            btn.innerText = "▶ Start (开始)";
+            btn.disabled = false;
+
+            const index = document.getElementById("activity-select").value;
+            const activity = activities[index];
+            
+            document.getElementById("question-text").innerHTML = activity.question;
+            document.getElementById("explanation-text").innerHTML = activity.explanation;
+            
+            // Build Code Lines HTML
+            const codeBox = document.getElementById("code-text");
+            codeBox.innerHTML = "";
+            activity.lines.forEach((lineText, idx) => {
+                const span = document.createElement('span');
+                span.className = 'code-line';
+                span.id = `line-${idx}`;
+                span.innerText = lineText;
+                codeBox.appendChild(span);
+                codeBox.appendChild(document.createTextNode('\n'));
+            });
+
+            // Reset UI text
+            document.getElementById("variables-content").innerHTML = "Click <b>Start</b> to see variables (点击“开始”或“下一步”查看变量)";
+            document.getElementById("output-content").innerText = "";
+        }
+
+        function nextStep() {
+            const index = document.getElementById("activity-select").value;
+            const activity = activities[index];
+            const totalSteps = activity.steps.length;
+
+            if (currentStep >= totalSteps) {
+                document.getElementById("variables-content").innerHTML += "<br><br><span style='color:#2ecc71'>[Execution Completed | 运行结束]</span>";
+                document.getElementById("next-btn").disabled = true;
+                return;
+            }
+
+            // Clear previous highlight
+            document.querySelectorAll('.code-line').forEach(el => el.classList.remove('active-line'));
+
+            const stepData = activity.steps[currentStep];
+            
+            // Highlight current line
+            const lineEl = document.getElementById(`line-${stepData.line}`);
+            if(lineEl) lineEl.classList.add('active-line');
+
+            // Update Variables Panel Visually
+            if(stepData.vars) {
+                document.getElementById("variables-content").innerHTML = stepData.vars;
+            }
+
+            // Append Output to Terminal
+            if(stepData.out) {
+                document.getElementById("output-content").innerText += stepData.out;
+            }
+
+            currentStep++;
+            
+            // Update button text after first click
+            document.getElementById("next-btn").innerText = "▶ Next Step (下一步)";
+        }
+
+        // Initialize first activity on load
+        window.onload = loadActivity;
+    </script>
+
+</body>
+</html>
