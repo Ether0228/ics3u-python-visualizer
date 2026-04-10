@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python GUI + SQLite 通讯录开发教程 (详尽版)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Noto+Sans+SC:wght@400;500;700;900&display=swap');
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #1a1a2e;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            color: #333;
+        }
+
+        /* 16:9 Slide Container */
+        #presentation-container {
+            width: 100vw;
+            max-width: 177.77vh;
+            height: 56.25vw;
+            max-height: 100vh;
+            background-color: #ffffff;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+            transform: scale(0.95);
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            padding: 4%;
+            box-sizing: border-box;
+            background-color: #fff;
+        }
+
+        .slide.active {
+            opacity: 1;
+            transform: scale(1);
+            pointer-events: auto;
+            z-index: 10;
+        }
+
+        /* Typography & Code */
+        h1, h2 { color: #1e293b; font-weight: 700; margin-bottom: 0.5em; }
+        h1 { font-size: 3vw; }
+        h2 { font-size: 2vw; border-left: 0.5vw solid #3b82f6; padding-left: 1vw; display: inline-block;}
+        
+        .code-block {
+            font-family: 'Fira Code', monospace;
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1.5vw;
+            border-radius: 0.5vw;
+            font-size: 1vw;
+            line-height: 1.6;
+            overflow-x: auto;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+        
+        .keyword { color: #569cd6; font-weight: bold;}
+        .string { color: #ce9178; }
+        .function { color: #dcdcaa; }
+        .comment { color: #6a9955; font-style: italic;}
+        .highlight-block { background-color: rgba(255, 255, 0, 0.15); border-left: 4px solid #eab308; padding-left: 8px; margin-left: -12px; display: block;}
+        .highlight-red-block { background-color: rgba(239, 68, 68, 0.15); border-left: 4px solid #ef4444; padding-left: 8px; margin-left: -12px; display: block;}
+        .highlight { background-color: rgba(255, 255, 0, 0.8); color: #000; padding: 0 4px; border-radius: 3px; font-weight: bold;}
+
+        /* Visual Mockups */
+        .grid-bg {
+            background-image: 
+                linear-gradient(to right, rgba(0,0,0,0.1) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0,0,0,0.1) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        /* Navigation */
+        #nav-controls {
+            position: absolute;
+            bottom: 3%;
+            right: 3%;
+            z-index: 100;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            background: rgba(255,255,255,0.9);
+            padding: 8px 15px;
+            border-radius: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .nav-btn {
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 2.5vw;
+            height: 2.5vw;
+            font-size: 1.2vw;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .nav-btn:hover { background-color: #2563eb; transform: scale(1.1); }
+        .nav-btn:active { transform: scale(0.9); }
+        #slide-indicator { font-size: 1vw; color: #475569; font-weight: 700; min-width: 3vw; text-align: center;}
+    </style>
+</head>
+<body>
+
+    <div id="presentation-container">
+        
+        <!-- Slide 1: Title -->
+        <div class="slide active bg-gradient-to-br from-blue-50 to-indigo-100 flex justify-center items-center text-center">
+            <div>
+                <div class="inline-block bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-bold mb-4">ICS3U.S4 - Unit 4 Test Prep</div>
+                <h1 class="text-blue-900 mb-6 drop-shadow-sm leading-tight">Python GUI 与 SQLite 数据库<br><span class="text-indigo-600">全栈开发深度解析</span></h1>
+                <p class="text-2xl text-gray-700 mb-10 font-medium">从坐标布局到双向数据绑定，逐行解剖“交互式通讯录”</p>
+                <div class="flex justify-center gap-6 text-base text-gray-600 font-semibold">
+                    <span class="bg-white/80 px-5 py-2 rounded-lg shadow-sm border border-blue-100">🐍 Tkinter UI 布局</span>
+                    <span class="bg-white/80 px-5 py-2 rounded-lg shadow-sm border border-blue-100">🗄️ SQLite 数据流转</span>
+                    <span class="bg-white/80 px-5 py-2 rounded-lg shadow-sm border border-blue-100">🛡️ 防注入安全机制</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: 课程背景与目标 (新增) -->
+        <div class="slide">
+            <h2>📚 课程定位：Unit 4 综合复习与实战演练</h2>
+            <div class="flex h-full mt-4 gap-8">
+                <div class="w-1/2 flex flex-col justify-center gap-6">
+                    <div class="bg-blue-50 border-l-4 border-blue-500 p-5 rounded shadow-sm">
+                        <h3 class="text-xl font-bold text-blue-800 mb-2">🎯 冲刺周一两小时机考 (Monday Exam)</h3>
+                        <p class="text-gray-700">本项目是针对即将来临的 <strong>Unit 4 阶段测试</strong>的考前靶向演练。通过完全手写并复现这个带有数据库持久化的 GUI 应用，确保大家在考场上能独立跑通整个业务流。</p>
+                    </div>
+                    <div class="bg-purple-50 border-l-4 border-purple-500 p-5 rounded shadow-sm">
+                        <h3 class="text-xl font-bold text-purple-800 mb-2">💡 计算机科学学习思维的转变</h3>
+                        <p class="text-gray-700 italic border-l-2 border-gray-400 pl-3 my-2 text-sm">"Before... students need to memorize for multiple choice questions. But coding and programming have completely changed." —— Ms. Atousa</p>
+                        <p class="text-gray-700">现代编程考核不再是死记硬背（Memorize），而是考察<strong>逻辑整合与资源利用能力</strong>。你完全可以借助资料甚至 AI，但前提是你必须深刻理解每一行代码底层的机制并能自己 Debug。</p>
+                    </div>
+                </div>
+                <div class="w-1/2 flex flex-col justify-center items-center">
+                     <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200 w-[90%]">
+                         <h3 class="text-lg font-bold text-gray-800 mb-6 text-center border-b pb-3">本节课核心能力指标</h3>
+                         <ul class="space-y-5 text-gray-700">
+                             <li class="flex items-center gap-4"><span class="bg-green-100 text-green-600 p-2 rounded-full font-bold shadow-sm">1</span> 独立完成 Tkinter GUI 控件的绝对坐标排版</li>
+                             <li class="flex items-center gap-4"><span class="bg-green-100 text-green-600 p-2 rounded-full font-bold shadow-sm">2</span> 理解并建立文本框与滚动条的“双向绑定”机制</li>
+                             <li class="flex items-center gap-4"><span class="bg-green-100 text-green-600 p-2 rounded-full font-bold shadow-sm">3</span> 编写安全的、防范 SQL 注入的数据库交互操作</li>
+                             <li class="flex items-center gap-4"><span class="bg-green-100 text-green-600 p-2 rounded-full font-bold shadow-sm">4</span> 理解 <code>fetchall()</code> 获取数据的元组结构</li>
+                         </ul>
+                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: 架构总览 -->
+        <div class="slide">
+            <h2>1. 项目架构概览：三层分离结构</h2>
+            <div class="flex h-full mt-4 gap-8">
+                <div class="w-1/2 flex flex-col justify-center text-lg space-y-6">
+                    <p class="text-gray-600 border-l-4 border-blue-400 pl-4">我们要实现一个具备<strong>持久化存储</strong>的桌面应用程序，它包含三个核心层级：</p>
+                    
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                        <div class="font-bold text-blue-600 mb-2">👁️ 表现层 (Frontend - Tkinter)</div>
+                        <p class="text-sm text-gray-600">负责呈现 <code>Entry</code> (输入框)、<code>Button</code> (按钮) 和 <code>Text</code> (文本框)，与用户直接交互。</p>
+                    </div>
+                    
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                        <div class="font-bold text-green-600 mb-2">🧠 逻辑层 (Backend - Python)</div>
+                        <p class="text-sm text-gray-600">负责定义 <code>add_data()</code> 和 <code>view_all()</code>，处理非空校验、格式转换和指令下发。</p>
+                    </div>
+                    
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+                        <div class="font-bold text-purple-600 mb-2">💾 存储层 (Database - SQLite)</div>
+                        <p class="text-sm text-gray-600">建立本地 <code>.db</code> 文件，通过 SQL 语句完成数据的增(INSERT)与查(SELECT)。</p>
+                    </div>
+                </div>
+                
+                <!-- Visual Mockup -->
+                <div class="w-1/2 bg-gray-50 rounded-xl p-6 shadow-inner flex flex-col relative border border-gray-200">
+                    <div class="text-center text-gray-500 font-bold mb-4 tracking-widest">【最终目标效果图】</div>
+                    <div class="flex-1 bg-gray-200 rounded-lg overflow-hidden border border-gray-300 shadow-lg relative flex flex-col">
+                        <div class="bg-gray-300 px-4 py-2 text-sm font-bold text-gray-700 flex items-center gap-2">
+                            <div class="flex gap-1"><div class="w-3 h-3 rounded-full bg-red-400"></div><div class="w-3 h-3 rounded-full bg-yellow-400"></div><div class="w-3 h-3 rounded-full bg-green-400"></div></div>
+                            Address Book
+                        </div>
+                        <div class="p-6 relative flex-1 bg-white">
+                            <div class="absolute left-8 top-6 font-semibold">Name</div>
+                            <div class="absolute left-24 top-5 w-48 border border-blue-400 shadow-[0_0_5px_rgba(59,130,246,0.5)] rounded px-2 py-1 bg-white text-sm">Iris</div>
+                            
+                            <div class="absolute left-8 top-16 font-semibold">Tel</div>
+                            <div class="absolute left-24 top-15 w-48 border border-gray-400 rounded px-2 py-1 bg-white text-sm text-gray-400">Enter phone...</div>
+                            
+                            <div class="absolute right-8 top-5 bg-gray-100 hover:bg-gray-200 border border-gray-400 rounded px-6 py-1 cursor-pointer font-medium shadow-sm">Add</div>
+                            <div class="absolute right-8 top-15 bg-gray-100 hover:bg-gray-200 border border-gray-400 rounded px-4 py-1 cursor-pointer font-medium shadow-sm">View All</div>
+                            
+                            <div class="absolute left-8 bottom-6 right-8 top-28 border border-gray-400 bg-white flex">
+                                <div class="w-11/12 p-3 font-mono text-xs text-gray-700 leading-relaxed border-r border-gray-200">
+                                    Name: Alice    Tel: 123-4567<br>
+                                    Name: Bob      Tel: 987-6543<br>
+                                    Name: Iris     Tel: 555-0000
+                                </div>
+                                <div class="w-1/12 bg-gray-100 flex flex-col justify-between py-1 items-center">
+                                    <div class="text-gray-400 text-[8px]">▲</div>
+                                    <div class="w-2/3 h-1/3 bg-gray-400 rounded-full"></div>
+                                    <div class="text-gray-400 text-[8px]">▼</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: 界面布局 -->
+        <div class="slide">
+            <h2>2. 界面构建：Tkinter 的绝对坐标系 (.place)</h2>
+            <div class="flex h-full mt-4 gap-6">
+                <div class="w-1/2">
+<pre class="code-block h-full text-[0.95vw]"><span class="comment"># 1. 创建主窗口并设置尺寸</span>
+root = Tk()
+root.title(<span class="string">"Address Book"</span>)
+<span class="highlight-block">root.geometry(<span class="string">"500x350"</span>) <span class="comment"># 宽500，高350</span></span>
+
+<span class="comment"># 2. 姓名标签与输入框布局</span>
+<span class="comment"># place(x, y) 表示距离左边缘x，上边缘y的像素</span>
+Label(root, text=<span class="string">"Name"</span>).place(x=<span class="highlight">40</span>, y=<span class="highlight">30</span>)
+entry_name = Entry(root, width=<span class="highlight">25</span>)
+entry_name.place(x=<span class="highlight">120</span>, y=<span class="highlight">30</span>)
+
+<span class="comment"># 3. 电话标签与输入框布局</span>
+<span class="comment"># X坐标与上面对齐，Y坐标增加形成换行</span>
+Label(root, text=<span class="string">"Tel"</span>).place(x=<span class="highlight">40</span>, y=<span class="highlight">70</span>)
+entry_tel = Entry(root, width=<span class="highlight">25</span>)
+entry_tel.place(x=<span class="highlight">120</span>, y=<span class="highlight">70</span>)
+
+<span class="comment"># 4. 按钮布局 (靠右放置)</span>
+Button(root, text=<span class="string">"Add"</span>, command=add_data).place(x=<span class="highlight">350</span>, y=<span class="highlight">30</span>)</pre>
+                </div>
+                <div class="w-1/2 flex flex-col justify-center items-center relative pl-8">
+                    <div class="text-xl mb-4 font-bold text-gray-700 w-full text-center">坐标系可视化解析</div>
+                    
+                    <div class="w-full aspect-[5/3.5] bg-white border-2 border-black relative grid-bg shadow-xl">
+                        <!-- X/Y Axes -->
+                        <div class="absolute top-0 left-0 w-full h-1 bg-red-500 z-20"></div>
+                        <div class="absolute top-0 left-0 w-1 h-full bg-blue-500 z-20"></div>
+                        <div class="absolute -top-6 left-1/2 text-red-500 font-bold">X 轴 (宽度: 500px) ➔</div>
+                        <div class="absolute top-1/2 -left-24 text-blue-500 font-bold -rotate-90">Y 轴 (高度: 350px)</div>
+                        
+                        <!-- Origin -->
+                        <div class="absolute -top-6 -left-6 bg-black text-white px-1 text-xs font-bold rounded">(0,0)</div>
+
+                        <!-- Components -->
+                        <div class="absolute border-2 border-green-500 bg-green-100/80 px-2 flex items-center" style="left: 8%; top: 8.5%; height:8%;">Name</div>
+                        <!-- Coordinate lines for Name Label -->
+                        <div class="absolute border-t border-dashed border-red-500" style="left:0; top: 12.5%; width:8%;"></div>
+                        <div class="absolute text-xs text-red-500 font-bold bg-white" style="left:2%; top: 13%;">y=30</div>
+                        <div class="absolute border-l border-dashed border-blue-500" style="left:8%; top:0; height:8.5%;"></div>
+                        <div class="absolute text-xs text-blue-500 font-bold bg-white" style="left:8.5%; top: 2%;">x=40</div>
+
+
+                        <div class="absolute border-2 border-purple-500 bg-purple-100/80 px-2 flex items-center" style="left: 24%; top: 8.5%; height:8%; width: 40%;">[ Entry_name ]</div>
+                        <div class="absolute text-xs text-blue-500 font-bold bg-white" style="left:24.5%; top: 2%;">x=120</div>
+                        <div class="absolute border-l border-dashed border-blue-500" style="left:24%; top:0; height:8.5%;"></div>
+
+
+                        <div class="absolute border-2 border-green-500 bg-green-100/80 px-2 flex items-center" style="left: 8%; top: 20%; height:8%;">Tel</div>
+                        <div class="absolute text-xs text-red-500 font-bold bg-white" style="left:2%; top: 21%;">y=70</div>
+                        <div class="absolute border-t border-dashed border-red-500" style="left:0; top: 24%; width:8%;"></div>
+
+                        <div class="absolute border-2 border-purple-500 bg-purple-100/80 px-2 flex items-center" style="left: 24%; top: 20%; height:8%; width: 40%;">[ Entry_tel ]</div>
+
+                        <div class="absolute border-2 border-orange-500 bg-orange-100/80 flex items-center justify-center font-bold" style="left: 70%; top: 8.5%; height:8%; width: 20%;">Add Btn</div>
+                        <div class="absolute text-xs text-blue-500 font-bold bg-white" style="left:70.5%; top: 2%;">x=350</div>
+                        <div class="absolute border-l border-dashed border-blue-500" style="left:70%; top:0; height:8.5%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: 数据库初始化 -->
+        <div class="slide">
+            <h2>3. 后端基石：初始化数据库 (init_db)</h2>
+            <div class="flex h-full mt-4 gap-6">
+                <div class="w-1/2">
+<pre class="code-block h-full"><span class="comment"># 程序启动时调用的第一个核心函数</span>
+<span class="keyword">def</span> <span class="function">init_db</span>():
+    <span class="comment"># 1. 连接/创建 数据库文件</span>
+    con = sqlite3.connect(<span class="string">"addressbook.db"</span>)
+    
+    <span class="comment"># 2. 召唤游标 (Cursor) 作为SQL执行者</span>
+    cur = con.cursor() 
+
+<span class="highlight-block">    <span class="comment"># 3. 执行建表指令 (多行字符串)</span>
+    cur.execute(<span class="string">"""
+        CREATE TABLE IF NOT EXISTS contacts
+        (
+            name TEXT,
+            tel TEXT
+        )
+    """</span>)</span>
+    
+<span class="highlight-red-block">    <span class="comment"># 4. 提交更改 (落盘) ！！！极易遗漏！！！</span>
+    con.commit()</span>
+    
+    <span class="comment"># 5. 关闭连接，释放文件锁</span>
+    con.close()</pre>
+                </div>
+                <div class="w-1/2 flex flex-col justify-center items-center">
+                    <div class="text-xl mb-6 text-center font-bold text-gray-700">建表逻辑解析图</div>
+                    <div class="bg-blue-50 border-2 border-blue-200 p-6 rounded-xl w-[85%] shadow-md relative">
+                        
+                        <div class="absolute -top-4 right-4 bg-yellow-400 text-xs font-bold px-2 py-1 rounded shadow">IF NOT EXISTS 机制</div>
+
+                        <div class="flex items-center gap-4 mb-6 border-b border-blue-200 pb-4">
+                            <div class="text-4xl">📁</div>
+                            <div>
+                                <div class="font-bold text-blue-800 text-xl">addressbook.db</div>
+                                <div class="text-xs text-gray-500">硬盘上的物理文件</div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white border-2 border-gray-300 rounded-lg overflow-hidden">
+                            <div class="bg-gray-100 px-4 py-2 text-sm font-bold border-b border-gray-300 flex justify-between">
+                                <span>表名：contacts</span>
+                                <span class="text-blue-500 text-xs">新建成功 ✅</span>
+                            </div>
+                            <table class="w-full text-left text-sm">
+                                <thead>
+                                    <tr>
+                                        <th class="border-b border-r p-3 text-center text-indigo-700 font-bold w-1/2 bg-indigo-50">name (TEXT)</th>
+                                        <th class="border-b p-3 text-center text-indigo-700 font-bold w-1/2 bg-indigo-50">tel (TEXT)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="border-r p-4 text-center text-gray-400 italic bg-gray-50">等待插入数据...</td>
+                                        <td class="p-4 text-center text-gray-400 italic bg-gray-50">等待插入数据...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div class="mt-6 text-sm bg-red-100 text-red-700 p-3 rounded-lg border border-red-200 flex items-start gap-2">
+                            <span class="text-lg">⚠️</span>
+                            <div>
+                                <strong>为什么必须写 con.commit()？</strong><br>
+                                SQLite 默认开启事务机制。<code>execute</code> 只是在“内存缓冲区”模拟了建表操作，只有执行 <code>commit()</code> 才会真正将表结构写入硬盘。
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: 获取与校验数据 -->
+        <div class="slide">
+            <h2>4. 核心流程1：前端数据的获取与校验</h2>
+            <div class="flex h-full mt-4 gap-6">
+                <div class="w-1/2">
+<pre class="code-block h-full text-[1vw]"><span class="comment"># 当点击 "Add" 按钮时触发此函数</span>
+<span class="keyword">def</span> <span class="function">add_data</span>():
+<span class="highlight-block">    <span class="comment"># 1. 从 Entry 组件抓取用户填写的字符串</span>
+    name = entry_name.get()
+    tel = entry_tel.get()</span>
+
+<span class="highlight-red-block">    <span class="comment"># 2. 防御性编程：空值校验</span>
+    <span class="keyword">if</span> name == <span class="string">""</span> <span class="keyword">or</span> tel == <span class="string">""</span>:
+        <span class="comment"># 弹出警告框阻断流程</span>
+        messagebox.showwarning(
+            <span class="string">"Warning"</span>, 
+            <span class="string">"Please fill all fields"</span>
+        )
+        <span class="keyword">return</span> <span class="comment"># 立即终止函数，不执行查库</span></span>
+
+    <span class="comment"># ... (此处省略存入数据库代码) ...</span></pre>
+                </div>
+                <div class="w-1/2 flex flex-col justify-center gap-8">
+                    
+                    <!-- Get Mockup -->
+                    <div class="bg-gray-100 p-5 rounded-xl border border-gray-300 shadow-sm relative">
+                        <div class="absolute -top-3 left-4 bg-blue-500 text-white text-xs font-bold px-2 py-1 rounded">步骤 1：.get() 方法</div>
+                        <div class="flex gap-4 items-center mt-2">
+                            <div class="flex-1 bg-white border border-gray-400 p-2 rounded shadow-inner text-gray-500 text-sm">
+                                [用户输入] ➜ <strong>Steve Jobs</strong>
+                            </div>
+                            <div class="text-blue-500 font-bold">.get() 提取</div>
+                            <div class="flex-1 bg-blue-50 border border-blue-400 p-2 rounded font-mono text-sm text-blue-800">
+                                name = "Steve Jobs"
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Validation Mockup -->
+                    <div class="bg-gray-100 p-5 rounded-xl border border-gray-300 shadow-sm relative">
+                        <div class="absolute -top-3 left-4 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">步骤 2：阻断空数据 (脏数据)</div>
+                        
+                        <div class="flex justify-between items-center mt-4">
+                            <div class="w-1/3">
+                                <div class="bg-white border border-red-300 p-2 text-sm text-red-500 italic rounded">Name: "" (空)</div>
+                                <div class="text-center my-1 text-gray-400">or</div>
+                                <div class="bg-white border border-red-300 p-2 text-sm text-red-500 italic rounded">Tel: "" (空)</div>
+                            </div>
+                            
+                            <div class="text-2xl text-red-500 font-bold">➜ 🛑 return</div>
+                            
+                            <!-- Msgbox visual -->
+                            <div class="w-2/5 bg-white border border-gray-400 rounded-lg shadow-xl overflow-hidden flex flex-col">
+                                <div class="bg-gray-100 p-1 px-2 text-xs border-b border-gray-300 flex items-center justify-between">
+                                    Warning <span class="text-gray-400 font-bold">×</span>
+                                </div>
+                                <div class="p-3 text-sm flex items-center gap-2">
+                                    <div class="text-yellow-500 text-xl">⚠️</div>
+                                    Please fill all fields
+                                </div>
+                                <div class="bg-gray-100 p-2 text-center">
+                                    <button class="bg-gray-300 border border-gray-400 px-4 py-0.5 rounded text-xs">OK</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: 写入数据库与防SQL注入 -->
+        <div class="slide">
+            <h2>5. 核心流程2：安全写入数据库 (占位符机制)</h2>
+            <div class="flex h-full mt-4 gap-6">
+                <div class="w-[55%]">
+<pre class="code-block h-full text-[0.95vw]"><span class="comment">    # 接续 add_data 函数：将校验通过的数据存盘</span>
+    con = sqlite3.connect(<span class="string">"addressbook.db"</span>)
+    cur = con.cursor()
+    
+<span class="highlight-block">    <span class="comment"># 使用 (?, ?) 问号占位符传参！</span>
+    <span class="comment"># 绝对不要用字符串拼接(如 f"{name}")防注入</span>
+    cur.execute(
+        <span class="string">"INSERT INTO contacts VALUES (?, ?)"</span>, 
+        (name, tel)  <span class="comment"># 传入元组 Tuple</span>
+    )</span>
+    
+<span class="highlight-red-block">    con.commit() <span class="comment"># 写入硬盘</span></span>
+    con.close()</pre>
+                </div>
+                <div class="w-[45%] flex flex-col justify-center">
+                    <div class="text-xl mb-4 text-center font-bold text-gray-700">为什么必须使用 (?, ?) 占位符？</div>
+                    
+                    <!-- SQL Injection visual -->
+                    <div class="bg-red-50 border-2 border-red-300 rounded-lg p-4 mb-4 relative overflow-hidden">
+                        <div class="absolute -right-6 top-2 bg-red-500 text-white text-[10px] font-bold px-8 py-1 rotate-45">错误示范</div>
+                        <h4 class="text-red-700 font-bold mb-2 flex items-center gap-2"><span class="text-xl">💣</span> 字符串拼接 (引发 SQL 注入漏洞)</h4>
+                        <p class="text-xs text-gray-600 mb-2">假设黑客在名字输入框填入：<code class="bg-white text-red-600 px-1 border border-red-200">Bob"); DROP TABLE contacts; --</code></p>
+                        <div class="bg-gray-900 p-2 rounded text-xs font-mono text-gray-300 leading-relaxed">
+                            <span class="text-blue-400">execute</span>(<span class="text-green-400">f"INSERT INTO contacts VALUES ('<span class="text-red-400 font-bold bg-red-900/50">Bob"); DROP TABLE contacts; --</span>', '123')"</span>)
+                        </div>
+                        <p class="text-xs text-red-600 font-bold mt-2">后果：原有的 INSERT 被强行截断，并执行了删表命令，数据库崩溃！</p>
+                    </div>
+
+                    <div class="bg-green-50 border-2 border-green-300 rounded-lg p-4 relative overflow-hidden">
+                        <div class="absolute -right-6 top-2 bg-green-500 text-white text-[10px] font-bold px-8 py-1 rotate-45">正确示范</div>
+                        <h4 class="text-green-700 font-bold mb-2 flex items-center gap-2"><span class="text-xl">🛡️</span> 问号占位符 (Parameterization)</h4>
+                        <div class="bg-gray-900 p-2 rounded text-xs font-mono text-gray-300 leading-relaxed">
+                            <span class="text-blue-400">execute</span>(<span class="text-green-400">"INSERT INTO ... VALUES (<span class="text-yellow-400 font-bold bg-yellow-900/50">?, ?</span>)"</span>, (<span class="text-white">name</span>, <span class="text-white">tel</span>))
+                        </div>
+                        <p class="text-xs text-green-700 mt-2">原理：数据库底层将 <code>?</code> 视为纯数据而非代码，无论输入多危险的字符，都会被当成普通文本强制转义，直接存入表内。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: UI回显与清空 -->
+        <div class="slide">
+            <h2>6. 核心流程3：前端反馈与 Text 控件索引机制</h2>
+            <div class="flex h-full mt-4 gap-6">
+                <div class="w-1/2">
+<pre class="code-block h-full text-[1vw]"><span class="comment">    # 接续 add_data 函数末尾段</span>
+
+<span class="highlight-block">    <span class="comment"># 1. 界面回显：无需查库，直接把刚插入的数据</span>
+    <span class="comment"># 打印到下方的 Text 多行文本框尾部</span>
+    text_box.insert(
+        END, <span class="comment"># END 是 Tkinter 常量，代表文本最末尾</span>
+        <span class="string">"Name: "</span> + name + <span class="string">"  Tel: "</span> + tel + <span class="string">"\n"</span>
+    )</span>
+
+<span class="highlight-red-block">    <span class="comment"># 2. 清空输入框内容，准备下一次输入</span>
+    <span class="comment"># 注意：Entry (单行框) 的索引是从 0 开始的</span>
+    entry_name.delete(0, END) 
+    entry_tel.delete(0, END)</span></pre>
+                </div>
+                <div class="w-1/2 flex flex-col justify-center items-center">
+                    <div class="bg-white border-2 border-gray-300 rounded-xl p-6 w-full shadow-lg relative">
+                        <div class="text-lg font-bold text-gray-800 border-b border-gray-200 pb-2 mb-4">Text 与 Entry 的“清理”差异</div>
+                        
+                        <!-- Entry Box -->
+                        <div class="mb-6">
+                            <div class="text-sm font-bold text-purple-600 mb-1">Entry 组件 (单行) - 索引为整数</div>
+                            <div class="flex items-center gap-2">
+                                <div class="bg-gray-100 border border-gray-400 p-2 font-mono tracking-widest text-lg rounded relative w-2/3">
+                                    <span class="text-red-500 absolute -top-4 left-2 text-xs font-bold">0</span>
+                                    S t e v e
+                                    <span class="text-blue-500 absolute -top-4 right-2 text-xs font-bold">END</span>
+                                </div>
+                                <div class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">.delete(0, END)</div>
+                            </div>
+                        </div>
+
+                        <!-- Text Box preview for slide 9 transition -->
+                        <div class="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded">
+                            <h4 class="font-bold text-yellow-800 text-sm mb-2">🤔 提前思考：如果是清空 Text (多行) 文本框呢？</h4>
+                            <p class="text-xs text-gray-600">由于多行文本框不仅有“列”，还有“行”。所以它不能用数字 0，而是要用类似二维坐标的字符串格式 <code class="bg-white px-1 text-red-500 border border-red-200">"1.0"</code>。具体逻辑见下一页详解。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 9: 读取数据逻辑与 1.0 索引 -->
+        <div class="slide">
+            <h2>7. 查看全部 (view_all)：拉取数据与 "1.0" 索引揭秘</h2>
+            <div class="flex h-full mt-4 gap-6">
+                <div class="w-[50%]">
+<pre class="code-block h-full text-[0.9vw]"><span class="keyword">def</span> <span class="function">view_all</span>():
+    con = sqlite3.connect(<span class="string">"addressbook.db"</span>)
+    cur = con.cursor()
+    <span class="comment"># 获取表中所有数据行</span>
+    cur.execute(<span class="string">"SELECT * FROM contacts"</span>)
+<span class="highlight-block">    rows = cur.fetchall() <span class="comment"># 把数据装进列表</span></span>
+    con.close()
+
+<span class="highlight-red-block">    <span class="comment"># 坑点：渲染前必须先清空屏幕历史残留！</span>
+    <span class="comment"># Text组件专属索引："行号.列号" (行号从1开始)</span>
+    text_box.delete(<span class="string">"1.0"</span>, END)</span>
+
+    <span class="keyword">if</span> rows:
+        <span class="keyword">for</span> row <span class="keyword">in</span> rows: <span class="comment"># 遍历每一行元组</span>
+            text_box.insert(END, 
+                <span class="string">"Name: "</span> + row[0] + <span class="string">" Tel: "</span> + row[1] + <span class="string">"\n"</span>
+            )
+    <span class="keyword">else</span>:
+        text_box.insert(END, <span class="string">"No data found"</span>)</pre>
+                </div>
+                <div class="w-[50%] flex flex-col justify-between gap-4">
+                    <!-- Fetchall visual -->
+                    <div class="bg-indigo-50 border border-indigo-200 rounded p-4 shadow-sm relative">
+                        <div class="absolute -top-3 left-4 bg-indigo-500 text-white text-xs font-bold px-2 py-1 rounded">内存数据结构: fetchall()</div>
+                        <div class="font-mono text-xs bg-gray-900 text-green-400 p-3 rounded mt-2 overflow-x-auto leading-relaxed">
+                            rows = [<br>
+                            &nbsp;&nbsp;(<span class="text-yellow-300">'Alice'</span>, <span class="text-pink-300">'123-4567'</span>),  <span class="text-gray-500"># 循环第一圈: row[0] 是姓名，row[1] 是电话</span><br>
+                            &nbsp;&nbsp;(<span class="text-yellow-300">'Bob'</span>,   <span class="text-pink-300">'987-6543'</span>)   <span class="text-gray-500"># 循环第二圈...</span><br>
+                            ]
+                        </div>
+                    </div>
+                    
+                    <!-- 1.0 Index Visual -->
+                    <div class="bg-white border-2 border-gray-300 rounded-xl p-4 shadow-inner relative flex-1 flex flex-col justify-center">
+                        <div class="absolute -top-3 right-4 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded">"1.0" 坐标大揭秘</div>
+                        <div class="relative bg-yellow-50 border border-yellow-300 h-24 font-mono text-xs p-2">
+                            <!-- Index markers -->
+                            <div class="absolute left-0 top-2 w-6 text-right pr-1 text-gray-400 bg-gray-100 border-r border-gray-300 h-full">
+                                1<br>2<br>3
+                            </div>
+                            <div class="ml-6 relative">
+                                <span class="absolute -top-3 -left-1 text-[8px] text-blue-500 font-bold">Col 0</span>
+                                <div class="bg-red-200/50 absolute left-0 top-0 w-3 h-4 border border-red-500 shadow-[0_0_8px_red]"></div>
+                                <span>Name: Old Data 1</span><br>
+                                <span>Name: Old Data 2</span><br>
+                            </div>
+                            
+                            <!-- Expalnation pointer -->
+                            <div class="absolute -left-10 top-2 text-xs font-bold text-red-500 whitespace-nowrap">
+                                Line 1<br>Col 0 ➔<br>即 "1.0"
+                            </div>
+                        </div>
+                        <p class="text-[10px] text-gray-500 mt-2 text-center">由于 Text 组件支持复杂的排版，Tkinter 设计了 <strong>“行号.字符号”</strong> 的索引法。且反直觉的是：<strong>行号从 1 开始，列号从 0 开始。</strong>因此最左上角的起点是 <code>"1.0"</code>。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 10: 滚动条双向绑定 -->
+        <div class="slide">
+            <h2>8. 高阶 UI 交互：容器与滚动条“双向绑定”</h2>
+            <div class="flex h-full mt-4 gap-6">
+                <div class="w-[55%]">
+<pre class="code-block h-full text-[0.9vw]"><span class="highlight-block"><span class="comment"># 1. 建立 Frame 框架作为物理容器组</span>
+frame = Frame(root)
+frame.place(x=40, y=130)  <span class="comment"># 容器用绝对定位</span></span>
+
+<span class="comment"># 2. 创建滚动条属于该容器，并在内部靠右拉满</span>
+scrollbar = Scrollbar(frame)
+scrollbar.pack(side=RIGHT, fill=Y)
+
+<span class="highlight-block"><span class="comment"># 3. 创建文本框。【正向绑定】：</span>
+<span class="comment"># 当内容变多，文本框命令滚动条(scrollbar.set)收缩滑块</span>
+text_box = Text(frame, width=55, height=14, 
+                yscrollcommand=scrollbar.set)
+text_box.pack(side=LEFT)</span>
+
+<span class="highlight-red-block"><span class="comment"># 4. 【反向绑定】：</span>
+<span class="comment"># 当拖拽滑块，滚动条命令文本框(text_box.yview)变更视野</span>
+scrollbar.config(command=text_box.yview)</span></pre>
+                </div>
+                <div class="w-[45%] flex flex-col items-center justify-center text-center">
+                    
+                    <div class="w-[90%] aspect-square border-4 border-dashed border-gray-400 rounded-xl p-4 flex flex-col relative bg-white shadow-lg">
+                        <div class="absolute -top-4 left-4 bg-gray-600 text-white px-3 py-1 font-bold rounded shadow">Frame 容器 (打包管理)</div>
+                        
+                        <div class="flex flex-1 mt-2">
+                            <!-- Text Widget Box -->
+                            <div class="w-4/5 h-full bg-blue-50 border-2 border-blue-400 flex flex-col justify-between font-bold text-blue-700 relative overflow-hidden">
+                                <div class="bg-blue-100 py-1 text-sm border-b border-blue-200">Text.pack(side=LEFT)</div>
+                                <div class="text-[10px] text-left p-2 opacity-50 space-y-1 font-mono">
+                                    <div>data line 1</div><div>data line 2</div><div>...</div><div>...</div><div>...</div><div>data line N</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Binding Arrows connecting them -->
+                            <div class="w-2 relative">
+                                <div class="absolute top-1/4 -left-6 bg-yellow-100 text-yellow-800 text-[9px] px-1 border border-yellow-300 rounded whitespace-nowrap z-20 shadow-sm font-bold">1. yscrollcommand=set ➔</div>
+                                <div class="absolute bottom-1/4 -left-8 bg-red-100 text-red-800 text-[9px] px-1 border border-red-300 rounded whitespace-nowrap z-20 shadow-sm font-bold">⬅ 2. command=yview</div>
+                            </div>
+
+                            <!-- Scrollbar Box -->
+                            <div class="w-1/5 h-full bg-gray-100 border-2 border-gray-400 flex flex-col items-center relative">
+                                <div class="w-full text-[8px] bg-gray-300 text-center py-1 font-bold">side=RIGHT</div>
+                                <div class="w-2/3 h-1/4 bg-gray-500 rounded-full mt-8 shadow-sm"></div>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-4 font-medium text-left">
+                            <strong>为什么要双向绑定？</strong><br>
+                            如果只有(1)，滚轮可用但拖滑块无效；如果只有(2)，拖滑块可用，但打字超过一页时，滑块不会自动变短提示你内容变多。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 11: 总结 -->
+        <div class="slide bg-gradient-to-br from-green-50 to-teal-100 flex flex-col justify-center items-center text-center">
+            <h1 class="text-teal-800 mb-8 font-black">🎉 Unit 4 知识图谱总结</h1>
+            <div class="grid grid-cols-2 gap-8 w-[85%] text-left">
+                
+                <div class="bg-white p-6 rounded-xl shadow-xl border-t-8 border-blue-500 hover:-translate-y-1 transition-transform">
+                    <h3 class="text-xl font-bold mb-4 flex items-center gap-2">🖥️ Tkinter 前端三大件</h3>
+                    <ul class="list-disc pl-5 space-y-3 text-gray-700 text-sm font-medium">
+                        <li><strong>获取输入框文本：</strong> <code>entry.get()</code></li>
+                        <li><strong>清空单行输入框：</strong> <code>entry.delete(0, END)</code></li>
+                        <li><strong>清空多行文本框：</strong> <code>text_box.delete("1.0", END)</code><br><span class="text-xs text-gray-500 font-normal">（切记：行从 1 算，列从 0 算）</span></li>
+                        <li><strong>按钮事件绑定：</strong> <code>Button(..., command=函数名)</code><br><span class="text-xs text-red-500 font-normal">（千万别写成函数名()，加括号页面一开就自动执行了！）</span></li>
+                    </ul>
+                </div>
+
+                <div class="bg-white p-6 rounded-xl shadow-xl border-t-8 border-green-500 hover:-translate-y-1 transition-transform">
+                    <h3 class="text-xl font-bold mb-4 flex items-center gap-2">🗄️ SQLite 后端四步曲</h3>
+                    <ul class="list-disc pl-5 space-y-3 text-gray-700 text-sm font-medium">
+                        <li><strong>建立连接通道：</strong> <code>connect("xx.db")</code> & <code>cursor()</code></li>
+                        <li><strong>增删改查动作：</strong> <code>cursor.execute(SQL语句)</code></li>
+                        <li><strong>防注入终极杀器：</strong> 强迫自己永远使用 <code>(?, ?)</code> 传参。</li>
+                        <li><strong>数据落盘 / 内存：</strong><br>
+                            <span class="text-xs">写入数据必须 <code>con.commit()</code> 才能存入硬盘。</span><br>
+                            <span class="text-xs">查询数据必须 <code>cur.fetchall()</code> 才能拿进内存。</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="mt-8 text-gray-700 font-bold tracking-widest text-lg">祝周一考试顺利！Good Luck for Monday's Exam! 🚀</div>
+        </div>
+
+        <!-- Controls -->
+        <div id="nav-controls">
+            <button class="nav-btn" onclick="prevSlide()" title="上一页">◀</button>
+            <span id="slide-indicator">1 / 11</span>
+            <button class="nav-btn" onclick="nextSlide()" title="下一页">▶</button>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 0;
+        const slides = document.querySelectorAll('.slide');
+        const indicator = document.getElementById('slide-indicator');
+
+        function updateSlides() {
+            slides.forEach((slide, index) => {
+                if (index === currentSlide) {
+                    slide.classList.add('active');
+                } else {
+                    slide.classList.remove('active');
+                }
+            });
+            indicator.innerText = `${currentSlide + 1} / ${slides.length}`;
+        }
+
+        function nextSlide() {
+            if (currentSlide < slides.length - 1) {
+                currentSlide++;
+                updateSlides();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 0) {
+                currentSlide--;
+                updateSlides();
+            }
+        }
+
+        // Keyboard navigation support
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight' || e.key === 'Space' || e.key === 'PageDown') {
+                e.preventDefault();
+                nextSlide();
+            } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+                e.preventDefault();
+                prevSlide();
+            }
+        });
+
+        // Initialize first slide
+        updateSlides();
+    </script>
+</body>
+</html>
